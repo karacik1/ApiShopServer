@@ -112,7 +112,7 @@ class BasketsRepository(ABC):
         pass
 
     @abstractmethod
-    def get_basket(self, basket_id) -> list[Basket] | int:
+    def get_basket(self, id_user) -> list[Basket]:
         pass
 
     @abstractmethod
@@ -120,11 +120,11 @@ class BasketsRepository(ABC):
         pass
 
     @abstractmethod
-    def delete_item(self, basket_id: Basket, item_id) -> None:
+    def delete_item(self, id_user: str, id_item: str,) -> None:
         pass
 
     @abstractmethod
-    def delete_basket(self, basket_id) -> None:
+    def delete_basket(self, id_user) -> None:
         pass
 
 class ShelveBasketsRepository(BasketsRepository):
@@ -135,27 +135,27 @@ class ShelveBasketsRepository(BasketsRepository):
         with shelve.open(self.db_name) as db:
             return list(db.values())
 
-    def get_basket(self, basket_id) -> list[Basket] | int:
+    def get_basket(self, id_user) -> list[Basket]:
         current_items = []
         with shelve.open(self.db_name) as db:
             for basket in list(db.values()):
-                if basket["basket_id"] == basket_id:
+                if basket.id_user == id_user:
                     current_items.append(basket)
-            return current_items or -1
+            return current_items
 
     def add_item(self, new_basket: Basket) -> list[Basket]:
         with shelve.open(self.db_name) as db:
-            db[new_basket.id_basket] = [new_basket.id_user, new_basket.id_item, new_basket.count]
-            return db[new_basket.id_basket]
+            db[new_basket.id] = new_basket
+            return db[new_basket.id]
 
-    def delete_item(self, basket_id: Basket, item_id) -> None:
+    def delete_item(self,id_user: str, id_item: str,) -> None:
         with shelve.open(self.db_name) as db:
             for basket in db.values():
-                if basket == basket_id and basket["item_id"] == item_id:
+                if basket.id_user == id_user and basket.id_item == id_item:
                     del db[basket.id]
 
-    def delete_basket(self, basket_id) -> None:
+    def delete_basket(self, id_user) -> None:
         with shelve.open(self.db_name) as db:
-            for basket in db.values():
-                if basket["basket_id"] == basket_id:
-                    del db[basket.id]
+            for key,basket in db.items():
+                if basket.id_user == id_user:
+                    del db[key]

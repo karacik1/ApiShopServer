@@ -38,13 +38,16 @@ def save_item_in_basket(id_user, id_item, repository:BasketsRepository, count ) 
     return new_basket
 
 
-def delete_item(basket_id: Basket, item_id, repository:BasketsRepository ) -> None:
-    repository.delete_item(basket_id, item_id)
+def delete_item(id_user: str, item_id: str, repository:BasketsRepository) -> None:
+    repository.delete_item(id_user, item_id)
 
 
-def delete_basket(id_basket, repository:BasketsRepository ) -> None:
-    repository.delete_basket(id_basket)
+def delete_basket(id_user: str, repository:BasketsRepository ) -> None:
+    repository.delete_basket(id_user)
 
+def get_basket(id_user: str, repository: BasketsRepository) -> list[Basket]:
+    basket = repository.get_basket(id_user)
+    return basket
 
 
 

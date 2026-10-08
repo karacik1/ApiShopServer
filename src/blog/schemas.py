@@ -37,10 +37,13 @@ class BasketModel(BaseModel):
     count: int
 
 class SaveItemModel(BaseModel):
-    id_basket: str
     id_user: str
     id_item: str
     count: int
+
+class ItemBasketDeleteModel(BaseModel):
+    id_user: str
+    id_item: str
 
 # __register__
 class LoginModel(BaseModel):
