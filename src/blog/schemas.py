@@ -11,6 +11,7 @@ class GetItemModel(BaseModel):
     price: int
 
 class CreateItemModel(BaseModel):
+    credentials: LoginModel
     title: str
     description: str
     price: int
@@ -19,10 +20,12 @@ class GetItemsModel(BaseModel):
     items: list[GetItemModel]
 
 class ChangeItemDescriptionModel(BaseModel):
+    credentials: LoginModel
     item_id: str
     new_description: str
 
 class ChangeItemPriceModel(BaseModel):
+    credentials: LoginModel
     item_id: str
     new_price: int
 
@@ -49,6 +52,7 @@ class ItemBasketDeleteModel(BaseModel):
 class LoginModel(BaseModel):
     username: str
     password: str
+    admin: bool
 
 class LoginUserModel(BaseModel):
     email: str

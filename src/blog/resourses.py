@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, status, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -13,7 +15,7 @@ from blog.schemas import (
     ItemBasketDeleteModel,
 )
 from blog import services
-from blog.repositories import ShelveItemsRepository, ShelveUsersRepository, ShelveBasketsRepository
+from blog.repositories import ShelveItemsRepository, ShelveBasketsRepository, ShelveManagersRepository
 
 router = APIRouter()  # это роутер, он нужен для FastAPI, чтобы определять эндпоинты
 
@@ -27,16 +29,36 @@ def get_items() -> GetItemsModel:
             for item in items
         ]
     )
+def authorization(credentials: LoginModel, admin_roots: bool = False) -> tuple[int, str] | None:
+    current_user = services.login(
+        username=credentials.username,
+        password=credentials.password,
+        admin=credentials.admin,
+        users_repository=ShelveManagersRepository(),
+    )
+
+    # Это аутентификация
+    if not current_user:
+        return 401, "Unauthorized user"
+
+    # а это авторизация
+    if admin_roots and not current_user.admin:
+        return 403, "Forbidden resource"
+
+    return None
 
 @router.post(
     "/item/create",
     response_model=GetItemModel,
-    status_code=status.HTTP_201_CREATED,  # 201 статус код потому что мы создаем объект – стандарт HTTP
+    status_code=status.HTTP_201_CREATED,
     responses={201: {"model": CreateItemModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
-    # Это нужно для сваггера. Мы перечисляем ответы эндпоинта, чтобы получить четкую документацию.
 )
-def create_item(new_item:CreateItemModel):  # credentials – тело с логином и паролем. Обычно аутентификация выглядит сложнее, но для нашего случая пойдет и так.
-    # authorization(credentials)
+def create_item(new_item:CreateItemModel):
+    error = authorization(new_item.credentials, admin_roots= True)
+    if error is not None:
+        status_code, detail = error
+        raise HTTPException(status_code=status_code, detail=detail)
+
     item = services.create_item(
         title=new_item.title,
         description=new_item.description,
@@ -45,33 +67,23 @@ def create_item(new_item:CreateItemModel):  # credentials – тело с лог
     )
     return item
 
-def authorization(credentials: LoginModel):
-    current_user = services.login(
-        username=credentials.username,
-        password=credentials.password,
-        users_repository=ShelveUsersRepository(),
-    )
 
-    # Это аутентификация
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized user"
-        )
-    # а это авторизация
-    if not isinstance(current_user, Manager):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden resource"
-        )
+
 
 
 
 @router.post(
     "/item/change/description",
-    status_code=status.HTTP_201_CREATED,  # 201 статус код потому что мы создаем объект – стандарт HTTP
+    status_code=status.HTTP_201_CREATED,
     responses={201: {"model": ChangeItemDescriptionModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
     # Это нужно для сваггера. Мы перечисляем ответы эндпоинта, чтобы получить четкую документацию.
 )
 def change_item_description(new_description: ChangeItemDescriptionModel):
+    error = authorization(new_description.credentials)
+    if error is not None:
+        status_code, detail = error
+        raise HTTPException(status_code=status_code, detail=detail)
+
     services.change_item_description(item_id=new_description.item_id,
                                      new_description=new_description.new_description,
                                      repository=ShelveItemsRepository())
@@ -79,11 +91,15 @@ def change_item_description(new_description: ChangeItemDescriptionModel):
 @router.post(
     "/item/change/price",
     response_model=GetItemModel,
-    status_code=status.HTTP_201_CREATED,  # 201 статус код потому что мы создаем объект – стандарт HTTP
+    status_code=status.HTTP_201_CREATED,
     responses={201: {"model": GetItemModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
-    # Это нужно для сваггера. Мы перечисляем ответы эндпоинта, чтобы получить четкую документацию.
 )
 def change_item_price(new_item_price: ChangeItemPriceModel):
+    error = authorization(new_item_price.credentials)
+    if error is not None:
+        status_code, detail = error
+        raise HTTPException(status_code=status_code, detail=detail)
+
     services.change_item_price(item_id=new_item_price.item_id,
                                new_price=new_item_price.new_price,
                                repository=ShelveItemsRepository())
@@ -144,3 +160,7 @@ def get_basket(id_user: str) -> GetBasketsModel:
         basket=[BasketModel(id_basket=basket.id, id_user=basket.id_user,id_item=basket.id_item, count=basket.count)
                 for basket in baskets]
     )
+
+
+
+

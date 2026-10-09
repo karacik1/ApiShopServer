@@ -1,4 +1,13 @@
-venv,
-*__pycache__*,
-.DS_Store,
-.idea, *.db
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+
+# shelve БД
+*.db
+*.dat
+*.dir
+*.bak

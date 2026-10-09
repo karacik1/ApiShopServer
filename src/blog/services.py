@@ -1,7 +1,9 @@
 from uuid import uuid4
 
-from blog.domains import Item, User, Basket
-from blog.repositories import ItemRepository, UserRepository, BasketsRepository
+from blog.domains import Item, User, Basket,Manager
+from blog.repositories import ItemRepository, BasketsRepository, ShelveManagersRepository, \
+    ManagersRepository
+
 
 # --ITEMS--
 def get_items(items_repository: ItemRepository) -> list[Item]:
@@ -53,7 +55,8 @@ def get_basket(id_user: str, repository: BasketsRepository) -> list[Basket]:
 
 # --USERS--
 def login(
-    username: str, password: str, users_repository: UserRepository) -> User | None:
-    users = users_repository.get_users(username=username, password=password)
+    username: str, password: str, admin:bool, users_repository: ManagersRepository) -> Manager | None:
+    users = users_repository.get_users(username=username, password=password, admin=admin)
     if users:
         return users[0]
+    return None

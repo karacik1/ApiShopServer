@@ -3,43 +3,53 @@ from abc import ABC, abstractmethod
 from blog.domains import Item, Manager, User, Basket
 
 
-class UserRepository(ABC):
+class ManagersRepository(ABC):
     """
         Абстрактный репозиторий для пользователей.
         От него нужно наследоваться в случае, когда нужно сделать другое хранилище, старое переписывать не нужно.
     """
+
     @abstractmethod
-    def get_users(self, username: str | None, password: str | None) -> list[User]:
+    def get_users(self, username: str | None, password: str | None, admin: bool | None) -> list[User]:
         pass
 
 
-class ShelveUsersRepository(UserRepository):
+class ShelveManagersRepository(ManagersRepository):
     """
         Реализация пользовательского хранилища в оперативной памяти.
         Пользователи инициализируются во время инициализации репозитория
     """
-    def __init__(self):
-        self.users = [
-            Manager(id="29ae7ebf-4445-42f2-9548-a3a54f095220",
-                  username="admin",
-                  password="Dimon4321!",
-                    admin=True
-            )
-        ]
-    def get_users(self, username: str | None, password: str | None) -> list[User]:
-        """
 
-        :param username: фильтр по логину
-        :param password: фильтр по паролю
-        :return: отфильтрованные пользователи
-        """
-        filtered_users = []
-        for user in self.users:
-            if username != username and username is not None:
+    def __init__(self):
+        self.db_name = "users.db"
+        with shelve.open(self.db_name) as db:
+            if "1" not in db:
+                db["1"] = Manager(id="1", username="1", password="1", admin=True)
+
+    def get_users(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        admin: bool | None = None,
+    ) -> list[User]:
+        with shelve.open(self.db_name) as db:
+            users = list(db.values())
+        result = []
+        for user in users:
+            if username is not None and user.username != username:
                 continue
-            if password != password and password is not None:
+            if password is not None and user.password != password:
                 continue
-            filtered_users.append(user)
+            if admin is not None and user.admin != admin:
+                continue
+            result.append(user)
+        return result
+
+    def create_user(self, user: User) -> User:
+        with shelve.open(self.db_name) as db:
+            db[user.id] = user
+        return user
+
 
 class ItemRepository(ABC):
     @abstractmethod
@@ -47,7 +57,7 @@ class ItemRepository(ABC):
         pass
 
     @abstractmethod
-    def get_item(self, item_id: int) -> list[Item] | int:
+    def get_item(self, item_id: str) -> list[Item] | int:
         pass
 
     @abstractmethod
@@ -62,9 +72,10 @@ class ItemRepository(ABC):
     def change_item_price(self, item_id: str, new_price: int) -> None:
         pass
 
+
 class ShelveItemsRepository(ItemRepository):
     def __init__(self):
-        self.db_name = "items"
+        self.db_name = "items.db"
 
     def get_items(self) -> list[Item]:
         with shelve.open(self.db_name) as db:
@@ -91,7 +102,6 @@ class ShelveItemsRepository(ItemRepository):
                     item.description = new_description
                     db[key] = item
 
-
     def change_item_price(self, item_id: str, new_price: int) -> None:
         with shelve.open(self.db_name) as db:
             for key, item in list(db.items()):
@@ -100,9 +110,9 @@ class ShelveItemsRepository(ItemRepository):
                     db[key] = item
 
     def create_item(self, item: Item):
+
         with shelve.open(self.db_name) as db:
             db[item.id] = item
-
 
 
 class BasketsRepository(ABC):
@@ -120,16 +130,17 @@ class BasketsRepository(ABC):
         pass
 
     @abstractmethod
-    def delete_item(self, id_user: str, id_item: str,) -> None:
+    def delete_item(self, id_user: str, id_item: str, ) -> None:
         pass
 
     @abstractmethod
     def delete_basket(self, id_user) -> None:
         pass
 
+
 class ShelveBasketsRepository(BasketsRepository):
     def __init__(self):
-        self.db_name = "baskets"
+        self.db_name = "baskets.db"
 
     def get_baskets(self) -> list[Basket]:
         with shelve.open(self.db_name) as db:
@@ -148,7 +159,7 @@ class ShelveBasketsRepository(BasketsRepository):
             db[new_basket.id] = new_basket
             return db[new_basket.id]
 
-    def delete_item(self,id_user: str, id_item: str,) -> None:
+    def delete_item(self, id_user: str, id_item: str, ) -> None:
         with shelve.open(self.db_name) as db:
             for basket in db.values():
                 if basket.id_user == id_user and basket.id_item == id_item:
@@ -156,6 +167,6 @@ class ShelveBasketsRepository(BasketsRepository):
 
     def delete_basket(self, id_user) -> None:
         with shelve.open(self.db_name) as db:
-            for key,basket in db.items():
+            for key, basket in db.items():
                 if basket.id_user == id_user:
                     del db[key]
