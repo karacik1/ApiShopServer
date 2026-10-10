@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .resourses import router
+from blog.resourses import router
 
 
 def get_app():
