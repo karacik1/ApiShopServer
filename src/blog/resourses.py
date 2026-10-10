@@ -1,21 +1,18 @@
-from typing import Literal
+from fastapi import APIRouter, status, HTTPException
 
 from fastapi import APIRouter, status, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 
-from blog.domains import Manager, Basket
+from blog import services
+from blog.domains import Basket, User
+from blog.repositories import ShelveItemsRepository, ShelveBasketsRepository,  \
+    ShelveUserRepository
 from blog.schemas import (
     GetItemModel,
     GetItemsModel,
-    GetBasketsModel,
-    BasketModel,
     LoginModel,
-    LoginUserModel,
-    ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, BasketModel, SaveItemModel,
-    ItemBasketDeleteModel,
+    ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, AddItemModel, CreateBasketModel,
+    GetBasketsModel, BasketModel, ItemBasketDeleteModel, GetUsersModel, OrderModel,
 )
-from blog import services
-from blog.repositories import ShelveItemsRepository, ShelveBasketsRepository, ShelveManagersRepository
 
 router = APIRouter()  # это роутер, он нужен для FastAPI, чтобы определять эндпоинты
 
@@ -34,7 +31,7 @@ def authorization(credentials: LoginModel, admin_roots: bool = False) -> tuple[i
         username=credentials.username,
         password=credentials.password,
         admin=credentials.admin,
-        users_repository=ShelveManagersRepository(),
+        users_repository=ShelveUserRepository(),
     )
 
     # Это аутентификация
@@ -66,11 +63,6 @@ def create_item(new_item:CreateItemModel):
         items_repository=ShelveItemsRepository(),
     )
     return item
-
-
-
-
-
 
 @router.post(
     "/item/change/description",
@@ -104,7 +96,7 @@ def change_item_price(new_item_price: ChangeItemPriceModel):
                                new_price=new_item_price.new_price,
                                repository=ShelveItemsRepository())
 
-
+# ----------------------------------------------------------BASKET
 @router.get(
     path="/baskets",
     response_model=GetBasketsModel,
@@ -113,54 +105,88 @@ def change_item_price(new_item_price: ChangeItemPriceModel):
 )
 def get_baskets() -> GetBasketsModel:
     baskets = services.get_baskets(repository=ShelveBasketsRepository())
-    return GetBasketsModel(
-        basket=[
-            BasketModel(id_basket=basket.id, id_user=basket.id_user, id_item=basket.id_item, count=basket.count)
-            for basket in baskets])
+    return GetBasketsModel(baskets = [Basket(id_basket=basket.id_basket, items=basket.items) for basket in baskets])
+
 
 @router.post(
-    "/basket/item/save",
+    "/basket/create",
+    status_code=status.HTTP_201_CREATED,
+    responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
+)
+def create_basket() -> str:
+    new_basket_id = services.create_basket(repository=ShelveBasketsRepository())
+    return new_basket_id
+
+@router.post(
+    "/basket/item/add",
     response_model=Basket,
     status_code=status.HTTP_200_OK,
     responses={200: {"model": Basket}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def save_item(new_item: SaveItemModel) -> Basket:
-    item = services.save_item_in_basket(id_user=new_item.id_user,
+def add_item(new_item: AddItemModel) -> Basket:
+    item = services.add_item_in_basket(id_basket=new_item.id_basket,
                                         id_item=new_item.id_item,
                                         repository=ShelveBasketsRepository(),
                                         count=new_item.count)
     return item
 
+
+
 @router.delete(
     "/basket/item/delete",
     status_code=status.HTTP_200_OK,
-    responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
+    responses={ 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
 def delete_basket_item(item: ItemBasketDeleteModel) -> None:
-    services.delete_item(id_user=item.id_user,item_id=item.id_item,repository=ShelveBasketsRepository())
+    services.delete_item(id_basket=item.id_basket,item_id=item.id_item,repository=ShelveBasketsRepository())
 
 
-@router.get(
+@router.delete(
     "/basket/delete",
     responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def delete_basket(id_user: str) -> None:
-    services.delete_basket(id_user=id_user, repository=ShelveBasketsRepository())
+def delete_basket(id_basket: str) -> None:
+    services.delete_basket(id_basket=id_basket, repository=ShelveBasketsRepository())
 
+@router.post(
+    "/basket/order",
+    status_code=status.HTTP_201_CREATED,
+    responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
+)
+def order_basket(order: OrderModel) -> str:
+    result = services.order_basket(order=order,basket_repository=ShelveBasketsRepository(), user_repository=ShelveUserRepository())
+    return result
 
 @router.get(
     "/basket",
     status_code=status.HTTP_200_OK,
-    response_model=GetBasketsModel,
+    response_model=Basket,
     responses={200: {"model": GetBasketsModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def get_basket(id_user: str) -> GetBasketsModel:
-    baskets = services.get_basket(id_user=id_user, repository=ShelveBasketsRepository())
-    return GetBasketsModel(
-        basket=[BasketModel(id_basket=basket.id, id_user=basket.id_user,id_item=basket.id_item, count=basket.count)
-                for basket in baskets]
-    )
+def get_basket(id_basket: str) -> Basket:
+    basket = services.get_basket(id_basket=id_basket, repository=ShelveBasketsRepository())
+    if basket is None:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    return basket
+
+
+# ----------------------------------регистрация для заказа
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+)
+def register(user: User):
+    services.register(user=user, repository=ShelveUserRepository())
+
+# --------------------------------пользователи
 
 
 
+@router.get(
+    "/users",
+    status_code=status.HTTP_200_OK,
+)
+def get_users() -> GetUsersModel:
+    users = services.get_users(repository=ShelveUserRepository())
+    return GetUsersModel(users=[User(email=user.email) for user in users])
 

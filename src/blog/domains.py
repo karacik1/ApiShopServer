@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class User:
     """Обычный пользователь"""
-    id: str
+    email: str
 
 
 @dataclass
@@ -15,16 +15,19 @@ class Manager(User):
 
 @dataclass
 class Item:
-    """Сущность статьи"""
     id: str
     title: str
     description: str
     price: int
 
+
 @dataclass
 class Basket:
-    id: str
-    id_user: str
+    id_basket: str
+    items: list[BasketItem]
+
+@dataclass
+class BasketItem:
     id_item: str
     count: int
 
