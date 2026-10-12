@@ -58,6 +58,10 @@ class LoginModel(BaseModel):
     admin: bool
 
 class LoginUserModel(BaseModel):
+    id: str
+    email: str
+
+class RegisterUserModel(BaseModel):
     email: str
 
 class ErrorModel(BaseModel):
@@ -70,7 +74,7 @@ class UserProfileModel(BaseModel):
     baskets: list[BasketModel]
 
 class GetUsersModel(BaseModel):
-    users: list[User]
+    users: list[UserProfileModel]
 
 class OrderModel(BaseModel):
     email: str

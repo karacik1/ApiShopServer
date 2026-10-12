@@ -3,9 +3,10 @@ from http.client import responses
 from pprint import pprint
 
 import requests, json
-paths = requests.get("http://127.0.0.1:8000/openapi.json").json()["paths"]
-print(json.dumps(list(paths.keys()), indent=2))
+# paths = requests.get("http://127.0.0.1:8000/openapi.json").json()["paths"]
+# print(json.dumps(list(paths.keys()), indent=2))
 
+url = "https://bestjaboashop.onrender.com"
 url = "http://127.0.0.1:8000"
 # "item_id":'4e678355-7cbd-4da6-a8b2-7856703563e5'
 
@@ -25,7 +26,7 @@ item = {'items': [{'description': '1',
             'item_id': '2fd207f6-f0e6-420f-874e-3be07d820a8e',
             'price': 1,
             'title': '1'}]}
-anonim_basket = 'cac0dece-b78f-4d45-a310-c44582f8359f'
+anonim_basket = 'f1311287-ffef-4692-a3c9-10b54b3dc238',
 email="супер почта"
 
 # получить все корзины
@@ -51,13 +52,19 @@ email="супер почта"
 # response = requests.delete(url+"/basket/delete", params={"id_basket": anonim_basket})
 
 # зарегистрироваться для заказа
-# response = requests.post(url+"/register", json={"email": "супер почта"} )
-# print(response.json())
+response = requests.post(url+"/register", params={"email": "новая почта"} )
+
 
 # заказать
-response = requests.post(url+"/basket/order", json={"email":email, "id_basket":anonim_basket})
-print(response.json())
+# response = requests.get(url+"/baskets")
+# print(response.json())
 
 # получить пользователей
-# response = requests.get(url+"/users")
-# print(response.json())
+response = requests.get(url+"/users")
+print(response.text)
+
+
+# listi = {1: {"lox":1},
+#          2: {"lox":1},
+#          3: {"lox":1}, }
+# for i in listi.keys():
