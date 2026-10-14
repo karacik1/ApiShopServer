@@ -1,6 +1,8 @@
 import shelve
 import uuid
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
 from blog.domains import Item, Manager, User, Basket, BasketItem
 
 class Repository(ABC):
@@ -17,20 +19,33 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def get_all(self):
+    def get_all(self, filters) :
         pass
 
     @abstractmethod
-    def save(self, key: str, obj) -> None:
+    def save(self, key: str, obj, overwrite: bool = False) -> None:
         pass
 
 class ShelveRepository(Repository):
     def __init__(self, db_name: str):
         self.db_name = db_name
 
-    def get_all(self) :
+    def get_all(self, filters: dict) -> list :
+        """получает список параметров и значений который должны быть для сортировки.
+        принимает только конкретные значения"""
+        data = []
+
         with shelve.open(self.db_name) as db:
-            return list(db.values())
+            for item_indx, item in db.items():
+                for param_key, param_value in filters.items():
+                    if param_key not in dir(item):
+                        break
+                    if getattr(item, param_key) != param_value:
+                        break
+                else: data.append(db[item_indx])
+
+
+            return data
 
     def get(self, key: str):
         with shelve.open(self.db_name) as db:
@@ -40,9 +55,25 @@ class ShelveRepository(Repository):
         with shelve.open(self.db_name) as db:
             del db[str(key)]
 
-    def save(self, key, obj):
+    def save(self, key, obj, overwrite=False):
         with shelve.open(self.db_name) as db:
-            db[key] = obj
+            if overwrite:
+                db[str(key)] = obj
+            else:
+                if self.get(key) is not None:
+                    raise ValueError(f"Key {key} already exists. Use overwrite=True")
+                else:
+                    db[str(key)] = obj
+
+
+    def __len__(self):
+        with shelve.open(self.db_name) as db:
+            return len(db)
+
+# @dataclass
+# class ShelfUsersRepository(ShelveRepository):
+#     db_name: str
+#     schema: User
 
 # class ShelveUserRepository(ShelveRepository):
 #
@@ -183,4 +214,4 @@ class ShelveRepository(Repository):
 #             for key, basket in db.items():
 #                 if basket.id_basket == id_basket:
 #                     del db[key]
-
+#

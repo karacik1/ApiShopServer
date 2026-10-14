@@ -1,6 +1,8 @@
+from multiprocessing import managers
+
 from pydantic import BaseModel
 
-from blog.domains import Basket, User
+from blog.domains import Basket, User, Manager
 
 
 # --ITEMS--
@@ -43,9 +45,6 @@ class AddItemModel(BaseModel):
     id_item: str
     count: int
 
-class CreateBasketModel(BaseModel):
-    basket_id: str
-
 
 class ItemBasketDeleteModel(BaseModel):
     id_basket: str
@@ -57,13 +56,6 @@ class LoginModel(BaseModel):
     password: str
     admin: bool
 
-class LoginUserModel(BaseModel):
-    id: str
-    email: str
-
-class RegisterUserModel(BaseModel):
-    email: str
-
 class ErrorModel(BaseModel):
     detail: str
 
@@ -74,8 +66,22 @@ class UserProfileModel(BaseModel):
     baskets: list[BasketModel]
 
 class GetUsersModel(BaseModel):
-    users: list[UserProfileModel]
+    users: list[User | Manager]
 
 class OrderModel(BaseModel):
     email: str
     id_basket: str
+
+class ParamsUserModel(BaseModel):
+    """Обычный пользователь"""
+    id: str | None = None
+    username: str | None = None
+    email: str | None = None
+    basket_UUID: str | None = None
+    admin: bool | None = None
+
+class ParamsItemModel(BaseModel):
+    id: str | None = None
+    title: str | None = None
+    description: str | None = None
+    price: int | None = None

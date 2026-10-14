@@ -26,8 +26,8 @@ item = {'items': [{'description': '1',
             'item_id': '2fd207f6-f0e6-420f-874e-3be07d820a8e',
             'price': 1,
             'title': '1'}]}
-anonim_basket = 'f1311287-ffef-4692-a3c9-10b54b3dc238',
-email="супер почта"
+anonim_basket = 'f1311287-ffef-4692-a3c9-10b54b3dc238'
+email="новая почта"
 
 # получить все корзины
 # response = requests.get(url+"/baskets")
@@ -52,19 +52,17 @@ email="супер почта"
 # response = requests.delete(url+"/basket/delete", params={"id_basket": anonim_basket})
 
 # зарегистрироваться для заказа
-response = requests.post(url+"/register", params={"email": "новая почта"} )
+# response = requests.post(url+"/register", params={"email": "супер новая почта"} )
+# print(response.json())
 
-
-# заказать
+# получить все карзинки
 # response = requests.get(url+"/baskets")
 # print(response.json())
 
 # получить пользователей
-response = requests.get(url+"/users")
-print(response.text)
+response = requests.get(url+"/users", params={"email": email})
+pprint(response.text)
 
-
-# listi = {1: {"lox":1},
-#          2: {"lox":1},
-#          3: {"lox":1}, }
-# for i in listi.keys():
+# заказать
+# response = requests.post(url+"/basket/order", json={"email": email, "id_basket": anonim_basket})
+# print(response.text)

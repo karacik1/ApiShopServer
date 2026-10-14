@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from blog.domains import Item, User, Basket, Manager, BasketItem
 from blog.repositories import ShelveRepository, Repository
-from blog.schemas import OrderModel, RegisterUserModel
+from blog.schemas import OrderModel
 
 baskets_repository = ShelveRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
@@ -31,8 +31,13 @@ def change_item_price(item_id: str, new_price: int) -> None:
 
 # --BASKET--
 
-def get_baskets() -> list[Basket]:
-    baskets = baskets_repository.get_all()
+def get_baskets(filters: dict) -> list[Basket]:
+    filters = {
+        k: v for k, v in {
+            "id_basket": filters["id_basket"],
+        }.items() if v is not None
+    }
+    baskets = baskets_repository.get_all(filters=filters)
     return baskets
 
 
@@ -63,11 +68,11 @@ def get_basket(id_basket: str) -> Basket | None:
     basket = baskets_repository.get(id_basket)
     return basket
 
-def order_basket(order: OrderModel, basket_repository: Repository) -> str:
+def order_basket(order: OrderModel) -> str:
     if not users_repository.get(order.email):
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not basket_repository.get(order.id_basket):
+    if not baskets_repository.get(order.id_basket):
         raise HTTPException(status_code=404, detail="Basket not found")
     return "Complete"
 
@@ -79,8 +84,17 @@ def register(email: str) :
     data = User(id=id_user,email=email)
     users_repository.save(key=id_user, obj=data)
 
-def get_users() ->list[User]:
-    return users_repository.get_all()
+def get_users(filters) ->list[User | Manager]:
+    filters = {
+        k: v for k, v in {
+            "id": id,
+
+            "email": filters["email"],
+
+            "admin": filters["admin"],
+        }.items() if v is not None
+    }
+    return users_repository.get_all(filters)
 
 
 # def login(users_repository: UsersRepository) -> Manager | None:

@@ -8,15 +8,17 @@ from blog.schemas import (
     GetItemModel,
     GetItemsModel,
     LoginModel,
-    ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, AddItemModel, CreateBasketModel,
-    GetBasketsModel, BasketModel, ItemBasketDeleteModel, GetUsersModel, OrderModel, LoginUserModel, RegisterUserModel,
+    ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, AddItemModel, ParamsUserModel,
+
+GetBasketsModel, BasketModel, ItemBasketDeleteModel, GetUsersModel, OrderModel,
+    ParamsUserModel,
 )
 
 router = APIRouter()  # это роутер, он нужен для FastAPI, чтобы определять эндпоинты
 
 
 # @router.get("/items", response_model=GetItemsModel)
-# def get_items() -> GetItemsModel:
+# def get_items(filters: ParamsItemModel) -> GetItemsModel:
 #     items = services.get_items()
 #     return GetItemsModel(
 #         items=[
@@ -100,8 +102,11 @@ router = APIRouter()  # это роутер, он нужен для FastAPI, ч�
     status_code=status.HTTP_200_OK,
     responses={200:{"model": GetBasketsModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def get_baskets() -> GetBasketsModel:
-    baskets = services.get_baskets()
+def get_baskets(id_basket: str | None = None) -> GetBasketsModel:
+    filters = {
+        "id_basket": id_basket
+    }
+    baskets = services.get_baskets(filters)
     return GetBasketsModel(baskets = [Basket(id_basket=basket.id_basket, items=basket.items) for basket in baskets])
 
 #
@@ -145,14 +150,14 @@ def delete_basket_item(item: ItemBasketDeleteModel) -> None:
 def delete_basket(id_basket: str) -> None:
     services.delete_basket(id_basket=id_basket)
 #
-# @router.post(
-#     "/basket/order",
-#     status_code=status.HTTP_201_CREATED,
-#     responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
-# )
-# def order_basket(order: OrderModel) -> str:
-#     result = services.order_basket(order=order)
-#     return result
+@router.post(
+    "/basket/order",
+    status_code=status.HTTP_201_CREATED,
+    responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
+)
+def order_basket(order: OrderModel) -> str:
+    result = services.order_basket(order=order)
+    return result
 #
 @router.get(
     "/basket",
@@ -183,7 +188,17 @@ def register(email: str):
     "/users",
     status_code=status.HTTP_200_OK,
 )
-def get_users() -> list[User]:
-    users = services.get_users()
-    return users
+def get_users(id: str | None = None,
+    username: str | None = None,
+    email: str | None = None,
+    admin: bool | None = None) -> GetUsersModel:
+    filters ={
+        "id": id,
+        "username": username,
+        "email": email,
+        "admin": admin
+
+    }
+    users = services.get_users(filters)
+    return GetUsersModel(users=[user for user in users])
 
