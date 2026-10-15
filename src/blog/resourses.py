@@ -1,4 +1,6 @@
-from fastapi import APIRouter, status, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, status, HTTPException, Depends, Query
 
 from fastapi import APIRouter, status, HTTPException
 
@@ -11,24 +13,31 @@ from blog.schemas import (
     ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, AddItemModel, ParamsUserModel,
 
     GetBasketsModel, BasketModel, ItemBasketDeleteModel, GetUsersModel, OrderModel,
-    ParamsUserModel, ParamsItemModel,
+    ParamsUserModel, ParamsItemModel, ParamsBasketModel,
 )
 
 router = APIRouter()  # это роутер, он нужен для FastAPI, чтобы определять эндпоинты
 
 
+# @router.get("/items")
+# def get_items(id: str | None = None,
+#               title: str | None = None,
+#               description: str | None = None,
+#               price: int | None = None) -> GetItemsModel:
+# filters = {
+#     "id": id,
+#     "title": title,
+#     "description": description,
+#     "price": price
+# }
+# items = services.get_items(filters)
+# return GetItemsModel(items=[item for item in items])
+
+
 @router.get("/items")
-def get_items(id: str | None = None,
-              title: str | None = None,
-              description: str | None = None,
-              price: int | None = None) -> GetItemsModel:
-    filters = {
-        "id": id,
-        "title": title,
-        "description": description,
-        "price": price
-    }
-    items = services.get_items(filters)
+def get_items(filters: Annotated[ParamsItemModel, Query()],
+) -> GetItemsModel:
+    items = services.get_items(filters.model_dump())
     return GetItemsModel(items=[item for item in items])
 
 
@@ -112,11 +121,9 @@ def change_item_price(new_item_price: ChangeItemPriceModel):
     status_code=status.HTTP_200_OK,
     responses={200: {"model": GetBasketsModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def get_baskets(id_basket: str | None = None) -> GetBasketsModel:
-    filters = {
-        "id_basket": id_basket
-    }
-    baskets = services.get_baskets(filters)
+def get_baskets(filters: Annotated[ParamsBasketModel, Query()]) -> GetBasketsModel:
+
+    baskets = services.get_baskets(filters.model_dump())
     return GetBasketsModel(baskets=[Basket(id_basket=basket.id_basket, items=basket.items) for basket in baskets])
 
 
@@ -178,19 +185,6 @@ def order_basket(order: OrderModel) -> str:
     return result
 
 
-#
-@router.get(
-    "/basket",
-    status_code=status.HTTP_200_OK,
-    response_model=Basket,
-    responses={200: {"model": GetBasketsModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
-)
-def get_basket(id_basket: str) -> Basket:
-    basket = services.get_basket(id_basket=id_basket)
-    if basket is None:
-        raise HTTPException(status_code=404, detail="Basket not found")
-    return basket
-
 
 #
 # # ----------------------------------регистрация для заказа
@@ -211,16 +205,7 @@ def register(email: str):
     "/users",
     status_code=status.HTTP_200_OK,
 )
-def get_users(id: str | None = None,
-              username: str | None = None,
-              email: str | None = None,
-              admin: bool | None = None) -> GetUsersModel:
-    filters = {
-        "id": id,
-        "username": username,
-        "email": email,
-        "admin": admin
-
-    }
-    users = services.get_users(filters)
+def get_users(
+    filters: Annotated[ParamsUserModel, Query()],) -> GetUsersModel:
+    users = services.get_users(filters.model_dump())
     return GetUsersModel(users=[user for user in users])

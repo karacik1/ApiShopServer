@@ -1,78 +1,83 @@
 from multiprocessing import managers
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from blog.domains import Basket, User, Manager, Item
 
-
+class StrictBaseModel(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",           # лишние поля — ошибка
+        str_strip_whitespace=True,  # убрать пробелы
+        validate_assignment=True,   # валидировать при изменении
+    )
 # --ITEMS--
-class GetItemModel(BaseModel):
+class GetItemModel(StrictBaseModel):
     item_id: str
     title: str
     description: str
     price: int
 
-class CreateItemModel(BaseModel):
+class CreateItemModel(StrictBaseModel):
     credentials: LoginModel
     title: str
     description: str
     price: int
 
-class GetItemsModel(BaseModel):
+class GetItemsModel(StrictBaseModel):
     items: list[Item]
 
-class ChangeItemDescriptionModel(BaseModel):
+class ChangeItemDescriptionModel(StrictBaseModel):
     credentials: LoginModel
     item_id: str
     new_description: str
 
-class ChangeItemPriceModel(BaseModel):
+class ChangeItemPriceModel(StrictBaseModel):
     credentials: LoginModel
     item_id: str
     new_price: int
 
 # __BASKET__
-class GetBasketsModel(BaseModel):
+class GetBasketsModel(StrictBaseModel):
     baskets: list[Basket]
 
-class BasketModel(BaseModel):
+class BasketModel(StrictBaseModel):
     id_basket: str
     id_item: str
     count: int
 
-class AddItemModel(BaseModel):
+class AddItemModel(StrictBaseModel):
     id_basket: str
     id_item: str
     count: int
 
 
-class ItemBasketDeleteModel(BaseModel):
+class ItemBasketDeleteModel(StrictBaseModel):
     id_basket: str
     id_item: str
 
 # __register__
-class LoginModel(BaseModel):
+class LoginModel(StrictBaseModel):
     username: str
     password: str
     admin: bool
 
-class ErrorModel(BaseModel):
+class ErrorModel(StrictBaseModel):
     detail: str
 
-class UserProfileModel(BaseModel):
+class UserProfileModel(StrictBaseModel):
     username: str
     email: str
     basket_UUID: str
     baskets: list[BasketModel]
 
-class GetUsersModel(BaseModel):
+class GetUsersModel(StrictBaseModel):
     users: list[User | Manager]
 
-class OrderModel(BaseModel):
+class OrderModel(StrictBaseModel):
     email: str
     id_basket: str
 
-class ParamsUserModel(BaseModel):
+class ParamsUserModel(StrictBaseModel):
     """Обычный пользователь"""
     id: str | None = None
     username: str | None = None
@@ -80,8 +85,11 @@ class ParamsUserModel(BaseModel):
     basket_UUID: str | None = None
     admin: bool | None = None
 
-class ParamsItemModel(BaseModel):
+class ParamsItemModel(StrictBaseModel):
     id: str | None = None
     title: str | None = None
     description: str | None = None
     price: int | None = None
+
+class ParamsBasketModel(StrictBaseModel):
+    id_basket: str | None = None

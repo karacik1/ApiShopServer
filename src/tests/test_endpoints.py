@@ -16,58 +16,72 @@ class GetEndpoint:
     url = None
     response_type = None
     status_code = None
-    data = {}
+    data_correct = {}
+    data_404 = {}
+    data_422 = {
+        "unreal_param": True
+    }
 
-    def test_status_code(self):
-        response = client.get(url=self.url, params=self.data)
+    @pytest.mark.smoke
+    def test_endpoint_positive_contract(self):
+        response = client.get(url=self.url, params=self.data_correct)
+
+        # Сразу проверяем и статус, и структуру ответа
         assert response.status_code == self.status_code
+        assert isinstance(response.json(), self.response_type)
 
-    def test_correct_type_returns(self):
-        response = client.get(url=self.url, params=self.data).json()
-        assert isinstance(response, self.response_type)
+    @pytest.mark.smoke
+    def test_param_is_not_exists(self):
+        response = client.get(url=self.url, params=self.data_422)
+        assert response.status_code == 422
 
 
 class TestEndPointGetUsers(GetEndpoint):
     url = "/users"
     response_type = dict
     status_code = 200
-
+    data_404 = {
+        "id": "unreal_id"
+    }
 
 class TestEndPointGetBaskets(GetEndpoint):
     url = "/baskets"
     response_type = dict
     status_code = 200
-
-@pytest.mark.skip(reason="Ждёт изоляции БД через Depends")
-class TestEndPointGetBasketItem(GetEndpoint):
-    url = "/basket"
-    response_type = Basket
-    status_code = 200
-    data = {
-        "id_basket": "1",
+    data_404 = {
+        "id_basket": "unreal_id"
     }
-
 
 class TestEndPointGetItems(GetEndpoint):
     url = "/items"
     response_type = dict
     status_code = 200
-
+    data_404 = {
+        "id": "unreal_id"
+    }
 
 # ---------------POST
 class PostEndpoint:
     url = None
     response_type = None
     status_code = None
-    data = {}
+    data_correct = {}
+    data_422 = {
+        "unreal_param": True
+    }
 
-    def test_status_code(self):
-        response = client.post(self.url, params=self.data)
+    @pytest.mark.smoke
+    def test_endpoint_positive_contract(self):
+        response = client.post(url=self.url, json=self.data_correct)
+
+        # Сразу проверяем и статус, и структуру ответа
         assert response.status_code == self.status_code
+        assert isinstance(response.json(), self.response_type)
 
-    def test_correct_type_returns(self):
-        response = client.post(self.url, params=self.data).json()
-        assert isinstance(response, self.response_type)
+    @pytest.mark.smoke
+    def test_param_is_not_exists(self):
+        response = client.post(url=self.url, json=self.data_422)
+        assert response.status_code == 422
 
 
 class TestEndPointCreateBasket(PostEndpoint):
