@@ -11,8 +11,17 @@ users_repository = ShelveRepository("users.db")
 items_repository = ShelveRepository("items.db")
 
 # --ITEMS--
-def get_items() -> list[Item]:
-    return items_repository.get_all()
+def get_items(filters) -> list[Item]:
+    filters = {
+        k: v for k, v in {
+            "id": id,
+            "price": filters["price"],
+            "title": filters["title"],
+
+            "description": filters["description"],
+        }.items() if v is not None
+    }
+    return items_repository.get_all(filters)
 
 
 def create_item(

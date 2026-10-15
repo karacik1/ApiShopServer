@@ -2,7 +2,7 @@ from multiprocessing import managers
 
 from pydantic import BaseModel
 
-from blog.domains import Basket, User, Manager
+from blog.domains import Basket, User, Manager, Item
 
 
 # --ITEMS--
@@ -19,7 +19,7 @@ class CreateItemModel(BaseModel):
     price: int
 
 class GetItemsModel(BaseModel):
-    items: list[GetItemModel]
+    items: list[Item]
 
 class ChangeItemDescriptionModel(BaseModel):
     credentials: LoginModel

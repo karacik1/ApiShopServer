@@ -52,8 +52,10 @@ class ShelveRepository(Repository):
             return db.get(key)
 
     def delete(self, key: str) :
-        with shelve.open(self.db_name) as db:
-            del db[str(key)]
+            with shelve.open(self.db_name) as db:
+                if self.get(key) is None:
+                    raise ValueError(f"Key {key} does not exist")
+                del db[str(key)]
 
     def save(self, key, obj, overwrite=False):
         with shelve.open(self.db_name) as db:
