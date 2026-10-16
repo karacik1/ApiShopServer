@@ -18,22 +18,6 @@ from blog.schemas import (
 
 router = APIRouter()  # это роутер, он нужен для FastAPI, чтобы определять эндпоинты
 
-
-# @router.get("/items")
-# def get_items(id: str | None = None,
-#               title: str | None = None,
-#               description: str | None = None,
-#               price: int | None = None) -> GetItemsModel:
-# filters = {
-#     "id": id,
-#     "title": title,
-#     "description": description,
-#     "price": price
-# }
-# items = services.get_items(filters)
-# return GetItemsModel(items=[item for item in items])
-
-
 @router.get("/items")
 def get_items(filters: Annotated[ParamsItemModel, Query()],
 ) -> GetItemsModel:
@@ -66,16 +50,15 @@ def authorization(credentials: LoginModel, admin_roots: bool = False) -> tuple[i
     responses={201: {"model": CreateItemModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
 )
 def create_item(new_item: CreateItemModel):
-    error = authorization(new_item.credentials, admin_roots=True)
-    if error is not None:
-        status_code, detail = error
-        raise HTTPException(status_code=status_code, detail=detail)
-
+    # error = authorization(new_item.credentials, admin_roots=True)
+    # if error is not None:
+    #     status_code, detail = error
+    #     raise HTTPException(status_code=status_code, detail=detail)
+    #
     item = services.create_item(
         title=new_item.title,
         description=new_item.description,
         price=new_item.price,
-        items_repository=ShelveItemsRepository(),
     )
     return item
 
@@ -83,35 +66,34 @@ def create_item(new_item: CreateItemModel):
 @router.post(
     "/item/change/description",
     status_code=status.HTTP_201_CREATED,
-    responses={201: {"model": ChangeItemDescriptionModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
+    responses={ 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
     # Это нужно для сваггера. Мы перечисляем ответы эндпоинта, чтобы получить четкую документацию.
 )
-def change_item_description(new_description: ChangeItemDescriptionModel):
-    error = authorization(new_description.credentials)
-    if error is not None:
-        status_code, detail = error
-        raise HTTPException(status_code=status_code, detail=detail)
+def change_item_description(new_description: ChangeItemDescriptionModel) -> None:
+    # error = authorization(new_description.credentials)
+    # if error is not None:
+    #     status_code, detail = error
+    #     raise HTTPException(status_code=status_code, detail=detail)
 
     services.change_item_description(item_id=new_description.item_id,
                                      new_description=new_description.new_description,
-                                     repository=ShelveItemsRepository())
+                                     )
 
 
 @router.post(
     "/item/change/price",
-    response_model=GetItemModel,
     status_code=status.HTTP_201_CREATED,
-    responses={201: {"model": GetItemModel}, 401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
+    responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
 )
-def change_item_price(new_item_price: ChangeItemPriceModel):
-    error = authorization(new_item_price.credentials)
-    if error is not None:
-        status_code, detail = error
-        raise HTTPException(status_code=status_code, detail=detail)
+def change_item_price(new_item_price: ChangeItemPriceModel) -> None:
+    # error = authorization(new_item_price.credentials)
+    # if error is not None:
+    #     status_code, detail = error
+    #     raise HTTPException(status_code=status_code, detail=detail)
 
     services.change_item_price(item_id=new_item_price.item_id,
                                new_price=new_item_price.new_price,
-                               repository=ShelveItemsRepository())
+                               )
 
 
 # # ----------------------------------------------------------BASKET
@@ -160,8 +142,8 @@ def add_item(new_item: AddItemModel) -> Basket:
     status_code=status.HTTP_200_OK,
     responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
-def delete_basket_item(item: ItemBasketDeleteModel) -> None:
-    services.delete_item(id_basket=item.id_basket, id_item=item.id_item)
+def delete_basket_item(data: Annotated[ItemBasketDeleteModel, Query()]) -> None:
+    services.delete_item(data.model_dump())
 
 
 #

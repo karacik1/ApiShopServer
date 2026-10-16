@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from blog.domains import Item, User, Basket, Manager, BasketItem
 from blog.repositories import ShelveRepository, Repository
-from blog.schemas import OrderModel
+from blog.schemas import OrderModel, ItemBasketDeleteModel
 
 baskets_repository = ShelveRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
@@ -60,13 +60,13 @@ def add_item_in_basket(id_item: str, id_basket: str, count: int = 1) -> Basket:
     baskets_repository.save(key=id_basket, obj=basket)
     return basket
 
-def delete_item(id_basket: str, id_item: str) -> None:
-    basket = baskets_repository.get(key=id_basket)
+def delete_item(data: ItemBasketDeleteModel) -> None:
+    basket = baskets_repository.get(key=data.id_basket)
     if not basket:
         raise HTTPException(status_code=404, detail="Basket not found")
 
-    basket.delete_item(id_item=id_item)
-    baskets_repository.save(key=id_basket, obj=basket)
+    basket.delete_item(id_item=data.id_item)
+    baskets_repository.save(key=data.id_basket, obj=basket)
     return basket
 
 
