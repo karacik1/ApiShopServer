@@ -24,4 +24,11 @@ def test_user_db(tmp_path):
                        email="email3",)
         db["4"] = User(id="4",
                        email="email2",)
+        db["0"] = Manager(
+                    id="uniq_admin_id",
+                    email="manager_email",
+                    username="manager_username",
+                    admin=True,
+                    password="123",
+                )
     yield str(db_path)

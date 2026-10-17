@@ -77,7 +77,8 @@ class OrderModel(StrictBaseModel):
     email: str
     id_basket: str
 
-
+class RegisterUserModel(StrictBaseModel):
+    email: str
 
 # ----------------FILTERS
 class ParamsUserModel(StrictBaseModel):

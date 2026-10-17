@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from blog.domains import Basket, BasketItem
+from blog.domains import Basket, BasketItem, User
 from blog.main import app
 from blog.repositories import ShelveRepository
 from blog.schemas import GetItemsModel, ChangeItemDescriptionModel, ChangeItemPriceModel, LoginModel
@@ -100,21 +100,6 @@ class TestEndPointCreateBasket:
         assert response.status_code == self.status_code
 
 
-class TestEndPointAddItem(PostEndpoint):
-    url = "/basket/item/add"
-    response_type = Basket
-    status_code = 200
-    data_correct = {
-        "id_basket": "5",
-        "id_item": "3",
-        "count": 1
-    }
-
-    @pytest.mark.smoke
-    @patch("blog.services.add_item_in_basket")
-    def test_endpoint_positive_contract(self, mok_service):
-        mok_service.return_value = Basket(id_basket="5", items = [BasketItem(id_item="3", count=1)])
-        super().test_endpoint_positive_contract()
 
 
 
@@ -132,43 +117,9 @@ class TestEndpointOrderBasket(PostEndpoint):
         super().test_endpoint_positive_contract()
 
 
-class TestEndpointChangeDescription(PostEndpoint):
-    url = "/item/change/description"
-    response_type = ChangeItemDescriptionModel
-    status_code = 201
-    data_correct = {"credentials": {
-        "username": "username",
-        "password": "password",
-        "admin": True
-    },
-        "item_id": "5",
-        "new_description": "new_description"}
-
-    @pytest.mark.smoke
-    @patch("blog.services.change_item_description")
-    def test_endpoint_positive_contract(self, mok_service):
-        mok_service.return_value = None
-        super().test_endpoint_positive_contract()
 
 
-class TestEndpointChangePrice(PostEndpoint):
-    url = "/item/change/price"
-    response_type = ChangeItemPriceModel
-    status_code = 201
-    data_correct = {"credentials": {
-        "username": "username",
-        "password": "password",
-        "admin": True
-    },
-        "item_id": "5",
-        "new_price": 12}
 
-    @pytest.mark.smoke
-    @patch("blog.services.change_item_price")
-    def test_endpoint_positive_contract(self, mok_service):
-
-        mok_service.return_value = None
-        super().test_endpoint_positive_contract()
 
 #----------------DELETE
 class DeleteEndpoint:
@@ -196,7 +147,7 @@ class DeleteEndpoint:
 
 class TestEndPointDeleteBasket(DeleteEndpoint):
     url = "/basket/delete"
-    status_code = 200
+    status_code = 204
     data_correct = {
         "id_basket": "5",
     }
@@ -209,7 +160,7 @@ class TestEndPointDeleteBasket(DeleteEndpoint):
 
 class TestEndPointDeleteBasketItem(DeleteEndpoint):
     url = "/basket/item/delete"
-    status_code = 200
+    status_code = 204
     data_correct = {
         "id_basket": "5",
         "id_item": "1"
@@ -219,6 +170,84 @@ class TestEndPointDeleteBasketItem(DeleteEndpoint):
     def test_endpoint_positive_contract(self, mok):
         mok.return_value = None
         super().test_endpoint_positive_contract()
+
+
+
+
+# ---------------PATCH
+class PatchEndpoint:
+    url = None
+    response_type = None
+    status_code = None
+    data_correct = {}
+    data_422 = {
+        "unreal_param": True
+    }
+    response = None
+    mok = None
+
+    def test_endpoint_positive_contract(self):
+        response = client.patch(url=self.url, json=self.data_correct)
+
+
+        # Сразу проверяем и статус, и структуру ответа
+        assert response.status_code == self.status_code
+
+
+    def test_param_is_not_exists(self):
+        response = client.patch(url=self.url, json=self.data_422)
+        assert response.status_code == 422
+
+class TestEndPointAddItem(PatchEndpoint):
+    url = "/basket/item/add"
+    response_type = Basket
+    status_code = 200
+    data_correct = {
+        "id_basket": "5",
+        "id_item": "3",
+        "count": 1
+    }
+
+    @pytest.mark.smoke
+    @patch("blog.services.add_item_in_basket")
+    def test_endpoint_positive_contract(self, mok_service):
+        mok_service.return_value = Basket(id_basket="5", items = [BasketItem(id_item="3", count=1)])
+        super().test_endpoint_positive_contract()
+
+
+class TestEndpointChangeDescription(PatchEndpoint):
+    url = "/item/change/description"
+    response_type = ChangeItemDescriptionModel
+    status_code = 204
+    login = {"username": "manager_username", "password": "123", "admin": True}
+    data_correct = {"data": {"id_item": "8387ef52-fc99-4321-bc3c-69d28047d00c", "new_description": "1232222"},
+                    "credentials": login}
+
+    @pytest.mark.smoke
+    @patch("blog.services.change_item_description")
+    def test_endpoint_positive_contract(self, mok_service):
+        mok_service.return_value = None
+        super().test_endpoint_positive_contract()
+
+class TestEndpointChangePrice(PatchEndpoint):
+    url = "/item/change/price"
+    response_type = ChangeItemPriceModel
+    status_code = 204
+    login = {"username":"manager_username","password":"123","admin":True}
+    data_correct = {"data":{"id_item":"8387ef52-fc99-4321-bc3c-69d28047d00c","new_price":1232222 }, "credentials":login}
+
+
+    @pytest.mark.smoke
+    @patch("blog.services.change_item_price")
+    def test_endpoint_positive_contract(self, mok_service):
+
+        mok_service.return_value = None
+        super().test_endpoint_positive_contract()
+
+
+
+
+
 
 # --------------REPOSITORY METHODS
 class TestShelveGetAll:
@@ -232,7 +261,7 @@ class TestShelveGetAll:
         filters = {"admin": True}
         repro = ShelveRepository(db_name=test_user_db)
         users = repro.get_all(filters=filters)
-        assert len(users) == 1
+        assert len(users) == 2
 
     def test_filter_by_nonexistent_value(self, test_user_db):
         repro = ShelveRepository(db_name=test_user_db)
@@ -243,20 +272,20 @@ class TestShelveGetAll:
         filters = {}
         repro = ShelveRepository(db_name=test_user_db)
         users = repro.get_all(filters=filters)
-        assert len(users) == 4
+        assert len(users) == 5
 
-
+# ----------------------------SHELVEMETHODS
 class TestShelveSave:
     def test_shelve_add_new_row(self, test_user_db):
         repro = ShelveRepository(db_name=test_user_db)
         count = len(repro)
-        repro.save(key="5", obj={"id": "5", "email": ""})
+        repro.save(key="5", obj=User(id="5", email=""))
         assert len(repro) == count + 1
 
     def test_save_stores_correct_object(self, test_user_db):
         """Save записывает именно тот объект, что передан."""
         repro = ShelveRepository(db_name=test_user_db)
-        obj = {"id": "5", "email": ""}
+        obj = User(id="5", email="")
 
         repro.save(key="5", obj=obj)
 
@@ -267,14 +296,14 @@ class TestShelveSave:
     def test_shelve_dont_add_new_row(self, test_user_db):
         repro = ShelveRepository(db_name=test_user_db)
         count = len(repro)
-        obj = {"id": "3", "email": "new_overwrited_email"}
+        obj = User(id="3", email="new_overwrited_email")
         repro.save(key="3", obj=obj, overwrite=True)
 
         assert len(repro) == count
 
     def test_save_overwrite_data(self, test_user_db):
         repro = ShelveRepository(db_name=test_user_db)
-        obj = {"id": "3", "email": "new_overwrited_email"}
+        obj = User(id="3", email="new_overwrited_email")
         repro.save(key="3", obj=obj, overwrite=True)
 
         with shelve.open(test_user_db) as db:
@@ -286,7 +315,7 @@ class TestShelveSave:
     def test_save_data_with_old_key(self, test_user_db):
         with pytest.raises(ValueError, match="Key 3 already exists. Use overwrite=True"):
             repro = ShelveRepository(db_name=test_user_db)
-            obj = {"id": "3", "email": "new_overwrited_email"}
+            obj = User(id="3", email="new_overwrited_email")
             repro.save(key="3", obj=obj)
 
 

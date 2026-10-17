@@ -9,7 +9,6 @@ from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateIt
 
 baskets_repository = ShelveRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
-
 items_repository = ShelveRepository("items.db")
 
 # --ITEMS--
@@ -70,19 +69,18 @@ def get_basket(id_basket: str) -> Basket | None:
     basket = baskets_repository.get(id_basket)
     return basket
 
-def order_basket(order: OrderModel) -> str:
+def order_basket(order: OrderModel) -> None:
     if not users_repository.get(order.email):
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
 
     if not baskets_repository.get(order.id_basket):
         raise HTTPException(status_code=404, detail="Basket not found")
-    return "Complete"
 
-def create_basket() -> str:
+def create_basket() -> None:
     new_basket_id = str(uuid4())
     new_basket = Basket(id_basket=new_basket_id)
     baskets_repository.save(key=new_basket_id, obj=new_basket)
-    return new_basket_id
+
 
 
 
