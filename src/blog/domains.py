@@ -21,6 +21,14 @@ class Item:
     description: str
     price: int
 
+    def change_description(self, new_description):
+        self.description = new_description
+
+
+    def change_price(self, new_price):
+        self.price = new_price
+
+
 @dataclass
 class BasketItem:
     id_item: str

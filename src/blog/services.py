@@ -1,51 +1,44 @@
 from uuid import uuid4
 
 from fastapi import HTTPException
+from pydantic import UUID4
 
 from blog.domains import Item, User, Basket, Manager, BasketItem
 from blog.repositories import ShelveRepository, Repository
-from blog.schemas import OrderModel, ItemBasketDeleteModel
+from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel
 
 baskets_repository = ShelveRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
+
 items_repository = ShelveRepository("items.db")
 
 # --ITEMS--
 def get_items(filters) -> list[Item]:
-    filters = {
-        k: v for k, v in {
-            "id": id,
-            "price": filters["price"],
-            "title": filters["title"],
-
-            "description": filters["description"],
-        }.items() if v is not None
-    }
     return items_repository.get_all(filters)
 
 
-def create_item(
-    title: str, description: str, price: int) -> Item:
-    item = Item(id=str(uuid4()), title=title, description=description, price=price)
-    items_repository.create_item(item=item)
-    return item
+def create_item(data:CreateItemModel):
+    key = str(uuid4())
+    item = Item(id=key, title=data.title, description=data.description, price=data.price)
+    items_repository.save(key= key, obj=item)
 
 
-def change_item_description(item_id: str, new_description: str) -> None:
-    items_repository.change_item_description(item_id, new_description)
+
+def change_item_description(id_item: str, new_description: str) -> None:
+    current_item = items_repository.get(id_item)
+    current_item.change_description(new_description)
+    items_repository.save(id_item, obj=current_item, overwrite=True)
 
 
-def change_item_price(item_id: str, new_price: int) -> None:
-    items_repository.change_item_price(item_id, new_price)
+def change_item_price(id_item: str, new_price: int) -> None:
+    current_item = items_repository.get(id_item)
+    current_item.change_price(new_price)
+    items_repository.save(id_item, obj=current_item, overwrite=True)
 
 # --BASKET--
 
 def get_baskets(filters: dict) -> list[Basket]:
-    filters = {
-        k: v for k, v in {
-            "id_basket": filters["id_basket"],
-        }.items() if v is not None
-    }
+
     baskets = baskets_repository.get_all(filters=filters)
     return baskets
 
@@ -85,6 +78,15 @@ def order_basket(order: OrderModel) -> str:
         raise HTTPException(status_code=404, detail="Basket not found")
     return "Complete"
 
+def create_basket() -> str:
+    new_basket_id = str(uuid4())
+    new_basket = Basket(id_basket=new_basket_id)
+    baskets_repository.save(key=new_basket_id, obj=new_basket)
+    return new_basket_id
+
+
+
+
 
 # --USERS--
 
@@ -94,27 +96,16 @@ def register(email: str) :
     users_repository.save(key=id_user, obj=data)
 
 def get_users(filters) ->list[User | Manager]:
-    filters = {
-        k: v for k, v in {
-            "id": id,
-
-            "email": filters["email"],
-
-            "admin": filters["admin"],
-        }.items() if v is not None
-    }
     return users_repository.get_all(filters)
 
 
-# def login(users_repository: UsersRepository) -> Manager | None:
-#     users = users_repository.get_users()
-#     if users:
-#         return users[0]
-#     return None
+def add_manager(manager: NewManager) -> None:
+    id = str(uuid4())
+    data = Manager(id=id, email=manager.email, password=manager.password, username=manager.username, admin=manager.admin)
+    users_repository.save(key=id, obj=data)
 
-
-def create_basket() -> str:
-    new_basket_id = str(uuid4())
-    new_basket = Basket(id_basket=new_basket_id)
-    baskets_repository.save(key=new_basket_id, obj=new_basket)
-    return new_basket_id
+def login(username: str, password: str, admin: bool) -> Manager | None:
+    current_user = users_repository.get_all(filters={"username": username, "password": password, "admin": admin})
+    if not current_user:
+        return None
+    return current_user[0]

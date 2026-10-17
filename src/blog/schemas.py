@@ -11,6 +11,9 @@ class StrictBaseModel(BaseModel):
         validate_assignment=True,   # валидировать при изменении
     )
 # --ITEMS--
+
+
+
 class GetItemModel(StrictBaseModel):
     item_id: str
     title: str
@@ -18,7 +21,6 @@ class GetItemModel(StrictBaseModel):
     price: int
 
 class CreateItemModel(StrictBaseModel):
-    credentials: LoginModel
     title: str
     description: str
     price: int
@@ -27,13 +29,11 @@ class GetItemsModel(StrictBaseModel):
     items: list[Item]
 
 class ChangeItemDescriptionModel(StrictBaseModel):
-    credentials: LoginModel
-    item_id: str
+    id_item: str
     new_description: str
 
 class ChangeItemPriceModel(StrictBaseModel):
-    credentials: LoginModel
-    item_id: str
+    id_item: str
     new_price: int
 
 # __BASKET__
@@ -64,11 +64,11 @@ class LoginModel(StrictBaseModel):
 class ErrorModel(StrictBaseModel):
     detail: str
 
-class UserProfileModel(StrictBaseModel):
-    username: str
+class NewManager(StrictBaseModel):
     email: str
-    basket_UUID: str
-    baskets: list[BasketModel]
+    username: str
+    password: str
+    admin: bool
 
 class GetUsersModel(StrictBaseModel):
     users: list[User | Manager]
@@ -77,6 +77,9 @@ class OrderModel(StrictBaseModel):
     email: str
     id_basket: str
 
+
+
+# ----------------FILTERS
 class ParamsUserModel(StrictBaseModel):
     """Обычный пользователь"""
     id: str | None = None
