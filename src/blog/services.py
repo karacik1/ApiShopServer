@@ -15,7 +15,7 @@ def get_items(filters) -> list[Item]:
     return items_repository.get_all(filters)
 
 
-def create_item(data:Cr eateItemModel):
+def create_item(data:CreateItemModel):
     key = str(uuid4())
     item = Item(id=key, title=data.title, description=data.description, price=data.price)
     items_repository.save(key= key, obj=item)

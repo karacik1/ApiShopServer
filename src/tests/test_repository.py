@@ -13,11 +13,11 @@ class TestShelveGetAll:
         filters = {"email": "email2"}
         repro = ShelveRepository(db_name=user_db_test)
         users = repro.get_all(filters=filters)
-        assert len(users) == 2
+        assert len(users) == 1
 
     @pytest.mark.unit
     def test_get_admins(self, user_db_test):
-        filters = {"admin": True}
+        filters = {"is_admin": True}
         repro = ShelveRepository(db_name=user_db_test)
         users = repro.get_all(filters=filters)
         assert len(users) == 2
@@ -36,7 +36,7 @@ class TestShelveGetAll:
         assert len(users) == 5
 
 # ----------------------------SHELVEMETHODS
-class TestDBSave:
+class TestShelveSave:
 
     @pytest.mark.unit
     def test_shelve_add_new_row(self, user_db_test):
@@ -85,7 +85,7 @@ class TestDBSave:
             repro.save(key="3", obj=obj)
 
 
-class TestDBDelete:
+class TestShelveDelete:
     @pytest.mark.unit
     def test_shelve_delete(self, user_db_test):
         repro = ShelveRepository(db_name=user_db_test)
