@@ -11,7 +11,6 @@ class User:
 @dataclass
 class Manager:
     id: str
-    user_id: str
     username: str
     password: str
     is_admin: bool

@@ -29,37 +29,39 @@ class GetItemsModel(StrictBaseModel):
     items: list[Item]
 
 class ChangeItemDescriptionModel(StrictBaseModel):
-    id_item: str
+    item_id: str
     new_description: str
 
 class ChangeItemPriceModel(StrictBaseModel):
-    id_item: str
+    item_id: str
     new_price: int
 
 # __BASKET__
 class GetBasketsModel(StrictBaseModel):
     baskets: list[Basket]
 
-class BasketModel(StrictBaseModel):
-    id_basket: str
-    id_item: str
-    count: int
-
 class AddItemModel(StrictBaseModel):
-    id_basket: str
-    id_item: str
+    basket_id: str
+    item_id: str
     count: int
 
+class RepresentBasketModel(StrictBaseModel):
+    basket_id: str
+    items: list[BasketRepresentItem]
+
+class BasketRepresentItem(StrictBaseModel):
+    item_id: str
+    count: int
 
 class ItemBasketDeleteModel(StrictBaseModel):
-    id_basket: str
-    id_item: str
+    basket_id: str
+    item_id: str
 
 # __register__
 class LoginModel(StrictBaseModel):
     username: str
     password: str
-    admin: bool
+
 
 class ErrorModel(StrictBaseModel):
     detail: str
@@ -75,7 +77,7 @@ class GetUsersModel(StrictBaseModel):
 
 class OrderModel(StrictBaseModel):
     email: str
-    id_basket: str
+    basket_id: str
 
 class RegisterUserModel(StrictBaseModel):
     email: str
@@ -96,4 +98,4 @@ class ParamsItemModel(StrictBaseModel):
     price: int | None = None
 
 class ParamsBasketModel(StrictBaseModel):
-    id_basket: str | None = None
+    basket_id: str | None = None

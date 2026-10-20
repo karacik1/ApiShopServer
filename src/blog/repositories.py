@@ -14,7 +14,7 @@ class Repository(ABC):
         От него нужно наследоваться в случае, когда нужно сделать другое хранилище, старое переписывать не нужно.
     """
     @abstractmethod
-    def get(self, key: str) -> Manager | User | Basket | Item | BasketItem:
+    def get(self, key: str) :
         pass
 
     @abstractmethod
@@ -22,11 +22,11 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def get_all(self, filters) -> list[Manager | User | Basket | Item | BasketItem]:
+    def get_all(self, filters) :
         pass
 
     @abstractmethod
-    def save(self, key: str, obj: Manager | User | Basket | Item, overwrite: bool = False) -> None:
+    def save(self, key: str, obj: Manager | User | Basket | Item | BasketItem, overwrite: bool = False) -> None:
         pass
 
 class ShelveRepository(Repository):
@@ -52,11 +52,11 @@ class ShelveRepository(Repository):
             if not self.get_all({"id": "uniq_admin_id"}):
                 admin = Manager(
                     id="uniq_admin_id",
-                    email="manager_email",
                     username="manager_username",
-                    admin=True,
+                    is_admin=True,
                     password="123",
                 )
+
                 self.save(key=admin.id, obj=admin, overwrite=True)
 
 
@@ -87,7 +87,7 @@ class ShelveRepository(Repository):
                 raise ValueError(f"Key {key} does not exist")
             del db[str(key)]
 
-    def save(self, key, obj: Manager | User | Basket | Item, overwrite=False):
+    def save(self, key, obj: Manager | User | Basket | Item| BasketItem, overwrite=False):
         with shelve.open(self.db_name) as db:
             if overwrite:
                 db[str(key)] = obj
@@ -102,14 +102,14 @@ class ShelveRepository(Repository):
         with shelve.open(self.db_name) as db:
             return len(db)
 
-    def add_item(self, id_item: str, count: int = 1) -> None:
+    def add_item(self, item_id: str, count: int = 1) -> None:
         for bi in self.items:
-            if bi.id_item == id_item:
+            if bi.item_id == item_id:
                 bi.count += count
                 return
-        self.items.append(BasketItem(id_item, count))
+        self.items.append(BasketItem(item_id, count))
 
-    def delete_item(self, id_item: str) -> None:
-        self.items = [bi for bi in self.items if bi.id_item != id_item]
+    def delete_item(self, item_id: str) -> None:
+        self.items = [bi for bi in self.items if bi.id_item != item_id]
 
 

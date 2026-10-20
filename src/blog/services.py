@@ -1,18 +1,12 @@
 from uuid import uuid4
 
 from fastapi import HTTPException
-from postgres import Postgres
-from pydantic import UUID4
 
-from blog.domains import Item, User, Basket, Manager, BasketItem
-from blog.repositories import ShelveRepository, Repository
-from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel
+from blog.domains import Item, User, Basket, Manager
+from blog.repositories import ShelveRepository
+from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel, RepresentBasketModel
 
-
-
-
-
-baskets_repository = PostgresRepository("baskets.db")
+baskets_repository = ShelveRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
 items_repository = ShelveRepository("items.db")
 
@@ -21,23 +15,23 @@ def get_items(filters) -> list[Item]:
     return items_repository.get_all(filters)
 
 
-def create_item(data:CreateItemModel):
+def create_item(data:Cr eateItemModel):
     key = str(uuid4())
     item = Item(id=key, title=data.title, description=data.description, price=data.price)
     items_repository.save(key= key, obj=item)
 
 
 
-def change_item_description(id_item: str, new_description: str) -> None:
-    current_item = items_repository.get(id_item)
+def change_item_description(item_id: str, new_description: str) -> None:
+    current_item = items_repository.get(key=item_id)
     current_item.change_description(new_description)
-    items_repository.save(id_item, obj=current_item, overwrite=True)
+    items_repository.save(item_id, obj=current_item, overwrite=True)
 
 
-def change_item_price(id_item: str, new_price: int) -> None:
-    current_item = items_repository.get(id_item)
+def change_item_price(item_id: str, new_price: int) -> None:
+    current_item = items_repository.get(item_id)
     current_item.change_price(new_price)
-    items_repository.save(id_item, obj=current_item, overwrite=True)
+    items_repository.save(item_id, obj=current_item, overwrite=True)
 
 # --BASKET--
 
@@ -48,42 +42,42 @@ def get_baskets(filters: dict) -> list[Basket]:
 
 
 
-def add_item_in_basket(id_item: str, id_basket: str, count: int = 1) -> Basket:
-    basket = baskets_repository.get(key=id_basket)
+def add_item_in_basket(item_id: str, basket_id: str, count: int = 1) -> RepresentBasketModel:
+    basket = baskets_repository.get(key=basket_id)
     if not basket:
         raise HTTPException(status_code=404, detail="Basket not found")
 
-    basket.add_item(id_item=id_item, count = count)
-    baskets_repository.save(key=id_basket, obj=basket)
+    basket.add_item(item_id=item_id, count = count)
+    baskets_repository.save(key=basket_id, obj=basket)
     return basket
 
 def delete_item(data: ItemBasketDeleteModel) -> None:
-    basket = baskets_repository.get(key=data.id_basket)
+    basket = baskets_repository.get(key=data.basket_id)
     if not basket:
         raise HTTPException(status_code=404, detail="Basket not found")
 
-    basket.delete_item(id_item=data.id_item)
-    baskets_repository.save(key=data.id_basket, obj=basket)
+    basket.delete_item(item_id=data.item_id)
+    baskets_repository.save(key=data.basket_id, obj=basket)
     return basket
 
 
-def delete_basket(id_basket: str) -> None:
-    baskets_repository.delete(id_basket)
+def delete_basket(basket_id: str) -> None:
+    baskets_repository.delete(basket_id)
 
-def get_basket(id_basket: str) -> Basket | None:
-    basket = baskets_repository.get(id_basket)
+def get_basket(basket_id: str) -> Basket | None:
+    basket = baskets_repository.get(basket_id)
     return basket
 
 def order_basket(order: OrderModel) -> None:
     if not users_repository.get(order.email):
         raise HTTPException(status_code=401, detail="User not found")
 
-    if not baskets_repository.get(order.id_basket):
+    if not baskets_repository.get(order.basket_id):
         raise HTTPException(status_code=404, detail="Basket not found")
 
 def create_basket() -> None:
     new_basket_id = str(uuid4())
-    new_basket = Basket(id_basket=new_basket_id)
+    new_basket = Basket(id=new_basket_id)
     baskets_repository.save(key=new_basket_id, obj=new_basket)
 
 
@@ -94,9 +88,9 @@ def create_basket() -> None:
 # --USERS--
 
 def register(email: str) :
-    id_user = str(uuid4())
-    data = User(id=id_user,email=email)
-    users_repository.save(key=id_user, obj=data)
+    user_id = str(uuid4())
+    data = User(id=user_id,email=email)
+    users_repository.save(key=user_id, obj=data)
 
 def get_users(filters) ->list[User | Manager]:
     return users_repository.get_all(filters)
@@ -107,8 +101,8 @@ def add_manager(manager: NewManager) -> None:
     data = Manager(id=id, email=manager.email, password=manager.password, username=manager.username, admin=manager.admin)
     users_repository.save(key=id, obj=data)
 
-def login(username: str, password: str, admin: bool) -> Manager | None:
-    current_user = users_repository.get_all(filters={"username": username, "password": password, "admin": admin})
+def login(username: str, password: str) -> Manager | None:
+    current_user = users_repository.get_all(filters={"username": username, "password": password})
     if not current_user:
         return None
     return current_user[0]

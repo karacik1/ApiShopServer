@@ -11,7 +11,7 @@ from blog.schemas import (
     LoginModel,
     ErrorModel, CreateItemModel, ChangeItemDescriptionModel, ChangeItemPriceModel, AddItemModel, GetBasketsModel,
     ItemBasketDeleteModel, GetUsersModel, OrderModel,
-    ParamsUserModel, ParamsItemModel, ParamsBasketModel, RegisterUserModel,
+    ParamsUserModel, ParamsItemModel, ParamsBasketModel, RegisterUserModel, RepresentBasketModel,
 )
 
 
@@ -23,7 +23,6 @@ def authorization(credentials: LoginModel) -> Manager:
     current_user = services.login(
         username=credentials.username,
         password=credentials.password,
-        admin=credentials.admin,
     )
 
     if not current_user:
@@ -31,7 +30,7 @@ def authorization(credentials: LoginModel) -> Manager:
     return current_user
 
 def require_admin(user: Manager = Depends(authorization)) -> None:
-    if not user.admin:
+    if not user.is_admin:
         raise HTTPException(status_code=403, detail="Forbidden resource")
     return None
 
@@ -64,8 +63,7 @@ def create_item(item: CreateItemModel, _ = Depends(require_admin)) :
     responses={ 401: {"model": ErrorModel}, 403: {"model": ErrorModel}}
 )
 def change_item_description(data: ChangeItemDescriptionModel, _ = Depends(require_manager)) -> None:
-    services.change_item_description(id_item=data.id_item,
-                                     new_description=data.new_description,
+    services.change_item_description(new_description=data.new_description,
                                      )
 
 @router.patch(
@@ -74,8 +72,7 @@ def change_item_description(data: ChangeItemDescriptionModel, _ = Depends(requir
     responses={401: {"model": ErrorModel}, 403: {"model": ErrorModel}},
 )
 def change_item_price(data: ChangeItemPriceModel, _ = Depends(require_manager)) -> None:
-    services.change_item_price(id_item=data.id_item,
-                               new_price=data.new_price,
+    services.change_item_price(new_price=data.new_price,
                                )
 
 
@@ -88,7 +85,7 @@ def change_item_price(data: ChangeItemPriceModel, _ = Depends(require_manager)) 
 )
 def get_baskets(filters: Annotated[ParamsBasketModel, Query()]) -> GetBasketsModel:
     baskets = services.get_baskets(filters.model_dump(exclude_none=True))
-    return GetBasketsModel(baskets=[Basket(id_basket=basket.id_basket, items=basket.items) for basket in baskets])
+    return GetBasketsModel(baskets=[Basket(id=basket.id, items=basket.items) for basket in baskets])
 
 
 #
@@ -104,13 +101,13 @@ def create_basket() -> None:
 
 @router.patch(
     "/basket/item/add",
-    response_model=Basket,
+    response_model=RepresentBasketModel,
     status_code=status.HTTP_200_OK,
     responses={200: {"model": Basket}, 404:{"model": ErrorModel}},
 )
-def add_item(new_item: AddItemModel) -> Basket:
-    item = services.add_item_in_basket(id_basket=new_item.id_basket,
-                                       id_item=new_item.id_item,
+def add_item(new_item: AddItemModel) -> RepresentBasketModel:
+    item = services.add_item_in_basket(basket_id=new_item.basket_id,
+                                       item_id=new_item.item_id,
 
                                        count=new_item.count)
     return item
@@ -129,8 +126,8 @@ def delete_basket_item(data: Annotated[ItemBasketDeleteModel, Query()]) -> None:
     status_code=status.HTTP_204_NO_CONTENT,
 
 )
-def delete_basket(id_basket: str) -> None:
-    services.delete_basket(id_basket=id_basket)
+def delete_basket(basket_id: str) -> None:
+    services.delete_basket(basket_id=basket_id)
 
 @router.post(
     "/basket/order",

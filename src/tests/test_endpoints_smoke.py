@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from blog.domains import Basket, BasketItem
 from blog.main import app
-from blog.schemas import ChangeItemDescriptionModel, ChangeItemPriceModel
+from blog.schemas import ChangeItemDescriptionModel, ChangeItemPriceModel, BasketRepresentItem, RepresentBasketModel
 
 client = TestClient(app)
 
@@ -50,7 +50,7 @@ class TestEndPointGetBaskets(GetEndpoint):
     response_type = dict
     status_code = 200
     data_404 = {
-        "id_basket": "unreal_id"
+        "id": "unreal_id"
     }
 
 
@@ -104,7 +104,7 @@ class TestEndpointOrderBasket(PostEndpoint):
     response_type = str
     status_code = 201
     data_correct = {"email": "email1",
-                    "id_basket": "1", }
+                    "basket_id": "1", }
 
     @pytest.mark.smoke
     @patch("blog.services.order_basket")
@@ -142,7 +142,7 @@ class TestEndPointDeleteBasket(DeleteEndpoint):
     url = "/basket/delete"
     status_code = 204
     data_correct = {
-        "id_basket": "5",
+        "basket_id": "5",
     }
 
     @patch("blog.services.delete_basket")
@@ -155,8 +155,8 @@ class TestEndPointDeleteBasketItem(DeleteEndpoint):
     url = "/basket/item/delete"
     status_code = 204
     data_correct = {
-        "id_basket": "5",
-        "id_item": "1"
+        "basket_id": "5",
+        "item_id": "1"
     }
 
     @patch("blog.services.delete_item")
@@ -192,15 +192,15 @@ class TestEndPointAddItem(PatchEndpoint):
     response_type = Basket
     status_code = 200
     data_correct = {
-        "id_basket": "5",
-        "id_item": "3",
+        "basket_id": "5",
+        "item_id": "3",
         "count": 1
     }
 
     @pytest.mark.smoke
     @patch("blog.services.add_item_in_basket")
     def test_endpoint_positive_contract(self, mok_service):
-        mok_service.return_value = Basket(id_basket="5", items=[BasketItem(id_item="3", count=1)])
+        mok_service.return_value = RepresentBasketModel(basket_id="5", items=[BasketRepresentItem(item_id="3", count=1)])
         super().test_endpoint_positive_contract()
 
 
@@ -208,8 +208,8 @@ class TestEndpointChangeDescription(PatchEndpoint):
     url = "/item/change/description"
     response_type = ChangeItemDescriptionModel
     status_code = 204
-    login = {"username": "manager_username", "password": "123", "admin": True}
-    data_correct = {"data": {"id_item": "8387ef52-fc99-4321-bc3c-69d28047d00c", "new_description": "1232222"},
+    login = {"username": "manager_username", "password": "123"}
+    data_correct = {"data": {"item_id": "8387ef52-fc99-4321-bc3c-69d28047d00c", "new_description": "1232222"},
                     "credentials": login}
 
     @pytest.mark.smoke
@@ -223,8 +223,8 @@ class TestEndpointChangePrice(PatchEndpoint):
     url = "/item/change/price"
     response_type = ChangeItemPriceModel
     status_code = 204
-    login = {"username": "manager_username", "password": "123", "admin": True}
-    data_correct = {"data": {"id_item": "8387ef52-fc99-4321-bc3c-69d28047d00c", "new_price": 1232222},
+    login = {"username": "manager_username", "password": "123"}
+    data_correct = {"data": {"item_id": "8387ef52-fc99-4321-bc3c-69d28047d00c", "new_price": 1232222},
                     "credentials": login}
 
     @pytest.mark.smoke
