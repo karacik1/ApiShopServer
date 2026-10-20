@@ -9,10 +9,12 @@ class User:
 
 
 @dataclass
-class Manager(User):
+class Manager:
+    id: str
+    user_id: str
     username: str
     password: str
-    admin: bool
+    is_admin: bool
 
 @dataclass
 class Item:
@@ -31,24 +33,18 @@ class Item:
 
 @dataclass
 class BasketItem:
-    id_item: str
+    id: str
+    basket_id: str
+    item_id: str
     count: int
 
 @dataclass
 class Basket:
-    id_basket: str
+    id: str
     items: list[BasketItem] = field(default_factory=list)
 
 
-    def add_item(self, id_item: str, count: int = 1) -> None:
-        for bi in self.items:
-            if bi.id_item == id_item:
-                bi.count += count
-                return
-        self.items.append(BasketItem(id_item, count))
 
-    def delete_item(self, id_item: str) -> None:
-        self.items = [bi for bi in self.items if bi.id_item != id_item]
 
 
 

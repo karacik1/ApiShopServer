@@ -1,13 +1,18 @@
 from uuid import uuid4
 
 from fastapi import HTTPException
+from postgres import Postgres
 from pydantic import UUID4
 
 from blog.domains import Item, User, Basket, Manager, BasketItem
 from blog.repositories import ShelveRepository, Repository
 from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel
 
-baskets_repository = ShelveRepository("baskets.db")
+
+
+
+
+baskets_repository = PostgresRepository("baskets.db")
 users_repository = ShelveRepository("users.db")
 items_repository = ShelveRepository("items.db")
 

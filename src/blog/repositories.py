@@ -14,15 +14,15 @@ class Repository(ABC):
         От него нужно наследоваться в случае, когда нужно сделать другое хранилище, старое переписывать не нужно.
     """
     @abstractmethod
-    def get(self, key: str):
+    def get(self, key: str) -> Manager | User | Basket | Item | BasketItem:
         pass
 
     @abstractmethod
-    def delete(self, key: str):
+    def delete(self, key: str) -> None:
         pass
 
     @abstractmethod
-    def get_all(self, filters) :
+    def get_all(self, filters) -> list[Manager | User | Basket | Item | BasketItem]:
         pass
 
     @abstractmethod
@@ -101,3 +101,15 @@ class ShelveRepository(Repository):
     def __len__(self):
         with shelve.open(self.db_name) as db:
             return len(db)
+
+    def add_item(self, id_item: str, count: int = 1) -> None:
+        for bi in self.items:
+            if bi.id_item == id_item:
+                bi.count += count
+                return
+        self.items.append(BasketItem(id_item, count))
+
+    def delete_item(self, id_item: str) -> None:
+        self.items = [bi for bi in self.items if bi.id_item != id_item]
+
+
