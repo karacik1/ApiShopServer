@@ -44,8 +44,7 @@ class Basket(Base):
 class Manager(Base):
     __tablename__ = "managers"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     username: Mapped[str] = mapped_column(String)
     password: Mapped[str] = mapped_column(String)
     is_admin: Mapped[bool] = mapped_column(Boolean)
