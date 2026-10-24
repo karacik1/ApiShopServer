@@ -2,7 +2,9 @@ import shelve
 
 import pytest
 
+from blog.db import make_engine, make_session_factory
 from blog.domains import User, Manager
+from blog.models import Base
 
 
 @pytest.fixture
@@ -29,3 +31,15 @@ def user_db_test(tmp_path):
                     password="123",
                 )
     yield str(db_path)
+
+@pytest.fixture
+def postgres_db_test():
+    DEFAULT_DSN = "postgresql+psycopg://postgres:toadbest@localhost:5432/shop_db_test"
+    engine = make_engine(DEFAULT_DSN)
+    Base.metadata.create_all(engine)
+    SessionLocal = make_session_factory(engine)
+
+    yield SessionLocal
+
+    Base.metadata.drop_all(engine)
+    engine.dispose()

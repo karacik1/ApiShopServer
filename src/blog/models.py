@@ -39,7 +39,7 @@ class Basket(Base):
     __tablename__ = "baskets"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    items: Mapped[list["BasketItem"]] = relationship(back_populates="basket")
+    items: Mapped[list["BasketItem"] | None] = relationship(back_populates="basket")
 
 class Manager(Base):
     __tablename__ = "managers"
