@@ -2,13 +2,13 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
-from blog.domains import Item, User, Basket, Manager
-from blog.repositories import ShelveRepository
+from blog.domains import Item, User as UserDomain, Basket, Manager
+from blog.models import User as UserModel
+from blog.repositories import PostgresUserRepository
 from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel, RepresentBasketModel
 
-baskets_repository = ShelveRepository("baskets.db")
-users_repository = ShelveRepository("users.db")
-items_repository = ShelveRepository("items.db")
+baskets_repository = None
+items_repository = None
 
 # --ITEMS--
 def get_items(filters) -> list[Item]:
@@ -86,23 +86,26 @@ def create_basket() -> None:
 
 
 # --USERS--
-
-def register(email: str) :
-    user_id = str(uuid4())
-    data = User(id=user_id,email=email)
-    users_repository.save(key=user_id, obj=data)
-
-def get_users(filters) ->list[User | Manager]:
-    return users_repository.get_all(filters)
+class UserService:
+    def __init__(self, users_repository) -> None:
+        self.users_repository = users_repository
 
 
-def add_manager(manager: NewManager) -> None:
-    id = str(uuid4())
-    data = Manager(id=id, email=manager.email, password=manager.password, username=manager.username, admin=manager.admin)
-    users_repository.save(key=id, obj=data)
+    def register(self, email: str) :
+        data = UserDomain(email=email)
+        self.users_repository.create(obj=data)
 
-def login(username: str, password: str) -> Manager | None:
-    current_user = users_repository.get_all(filters={"username": username, "password": password})
-    if not current_user:
-        return None
-    return current_user[0]
+    def get_users(self, filters) ->list[UserDomain | Manager]:
+        return self.users_repository.get_all(filters)
+
+
+    def add_manager(self, manager: NewManager) -> None:
+        id = str(uuid4())
+        data = Manager(id=id, email=manager.email, password=manager.password, username=manager.username, admin=manager.admin)
+        self.users_repository.save(key=id, obj=data)
+
+    def login(self, username: str, password: str) -> Manager | None:
+        current_user = self.users_repository.get_all(filters={"username": username, "password": password})
+        if not current_user:
+            return None
+        return current_user[0]

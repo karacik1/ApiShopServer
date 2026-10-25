@@ -22,13 +22,39 @@ admin = {
   "description": "1",
   "price": 1
 }
-item = {'items': [{'description': '1',
-            'item_id': '2fd207f6-f0e6-420f-874e-3be07d820a8e',
+item = {
+            'description': 'description',
             'price': 1,
-            'title': '1'}]}
+            'title': 'new_item213'}
+
+login = {"username":"manager_username","password":"123","admin":True}
 anonim_basket = 'f1311287-ffef-4692-a3c9-10b54b3dc238'
 email="новая почта"
 
+user='{"id":"uniq_admin_id","email":"manager_email","username":"manager_username","password":"23","admin":false}'
+
+
+item_in_bd = {"id":"8387ef52-fc99-4321-bc3c-69d28047d00c","title":"new_item213","description":"description","price":1}
+# -----------------------ITEMS
+# поменять цену
+# response = requests.post(url+"/item/change/price", json={"data":{"id_item":"8387ef52-fc99-4321-bc3c-69d28047d00c","new_price":1232222 }, "credentials":login})
+
+
+# поменять описание
+# response = requests.post(url+"/item/change/description", json={"data":{"id_item":"8387ef52-fc99-4321-bc3c-69d28047d00c","new_description":"12222222" }, "credentials":login})
+
+# создать вещь
+# response = requests.post(url+"/item/create", json={"item":item, "credentials":login})
+# pprint(response.json())
+
+# получить все вещи
+# response = requests.get(url+"/items")
+# print(response.text)
+
+
+
+
+# -----------------------------BASKETS
 # получить все корзины
 # response = requests.get(url+"/baskets")
 # pprint(response.json())
@@ -51,17 +77,18 @@ email="новая почта"
 # удалить корзину
 # response = requests.delete(url+"/basket/delete", params={"id_basket": anonim_basket})
 
+
+
+
+
+# ----------------------USERS
 # зарегистрироваться для заказа
 # response = requests.post(url+"/register", params={"email": "супер новая почта"} )
 # print(response.json())
 
-# получить все карзинки
-# response = requests.get(url+"/baskets")
-# print(response.json())
-
 # получить пользователей
-response = requests.get(url+"/users", params={"email": email})
-pprint(response.text)
+# response = requests.get(url+"/users", params=login)
+# pprint(response.text)
 
 # заказать
 # response = requests.post(url+"/basket/order", json={"email": email, "id_basket": anonim_basket})

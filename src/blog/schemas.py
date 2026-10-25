@@ -86,10 +86,7 @@ class RegisterUserModel(StrictBaseModel):
 class ParamsUserModel(StrictBaseModel):
     """Обычный пользователь"""
     id: str | None = None
-    username: str | None = None
     email: str | None = None
-    basket_UUID: str | None = None
-    admin: bool | None = None
 
 class ParamsItemModel(StrictBaseModel):
     id: str | None = None
@@ -99,3 +96,8 @@ class ParamsItemModel(StrictBaseModel):
 
 class ParamsBasketModel(StrictBaseModel):
     basket_id: str | None = None
+
+class ParamsManagerModel(StrictBaseModel):
+    user_id: str | None = None
+    username: str | None = None
+    is_admin: bool | None = None
