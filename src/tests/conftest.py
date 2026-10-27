@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 
 from blog.db import make_engine, make_session_factory
 from blog.domains import User, Manager
-from blog.models import Base, User as UserModel, Item as ItemModel, Manager as ManagerModel , Basket as BasketModel, BasketItem as BasketItemModel
+from blog.models import Base, User as UserModel, Item as ItemModel, Manager as ManagerModel, Basket as BasketModel, \
+    BasketItem as BasketItemModel
 
 
 @pytest.fixture
@@ -22,16 +23,17 @@ def user_db_test(tmp_path):
                           password="Sam",
                           is_admin=True)
         db["3"] = User(id="3",
-                       email="email3",)
+                       email="email3", )
         db["4"] = User(id="4",
-                       email="email2",)
+                       email="email2", )
         db["0"] = Manager(
-                    id="uniq_admin_id",
-                    username="manager_username",
-                    is_admin=True,
-                    password="123",
-                )
+            id="uniq_admin_id",
+            username="manager_username",
+            is_admin=True,
+            password="123",
+        )
     yield str(db_path)
+
 
 @pytest.fixture
 def postgres_db_test():
@@ -59,48 +61,37 @@ def seed_data_items(postgres_db_test):
     """
     Эта фикстура создает предсказуемые данные ДО начала теста.
     """
-    # postgres_db_test — это фабрика сессий (sessionmaker), привязанная к транзакции
     with postgres_db_test() as session:
+        session.add_all(
+            [ItemModel(id="item_1", title="Test Item", description="Desc", price=100),
+             ItemModel(id="item_2", title="Test Item", description="Desc2", price=1002),
+             ItemModel(id="item_3", title="Test Item3", description="Desc2", price=1003),
+             ItemModel(id="item_4", title="Test Item4", description="Desc4", price=100), ]
+        )
 
-        # 2. Создаем товар с ФИКСИРОВАННЫМ id
-        item = ItemModel(id="item_1", title="Test Item", description="Desc", price=100)
-        session.add(item)
-        item = ItemModel(id="item_2", title="Test Item", description="Desc2", price=1002)
-        session.add(item)
-        item = ItemModel(id="item_3", title="Test Item3", description="Desc2", price=1003)
-        session.add(item)
-        item = ItemModel(id="item_4", title="Test Item4", description="Desc4", price=100)
-        session.add(item)
-
-
-
+        session.flush()
     # Возвращаем словарь с этими id, чтобы тест мог их использовать
     yield {
         "items_ids": ["item_1", "item_2", "item_3", "item_4"],
     }
+
 
 @pytest.fixture
 def seed_data_users(postgres_db_test):
     """
     Эта фикстура создает предсказуемые данные ДО начала теста.
     """
-    # postgres_db_test — это фабрика сессий (sessionmaker), привязанная к транзакции
     with postgres_db_test() as session:
-        # 1. Создаем пользователя с ФИКСИРОВАННЫМ id
-        user = UserModel(id="user_1", email="test1@example.com")
-        session.add(user)
-        user = UserModel(id="user_2", email="test2@example.com")
-        session.add(user)
-        user = UserModel(id="user_3", email="test3@example.com")
-        session.add(user)
-        user = UserModel(id="user_4", email="test4@example.com")
-        session.add(user)
+        session.add_all([
+            UserModel(id="user_1", email="test1@example.com"),
+            UserModel(id="user_2", email="test2@example.com"),
+            UserModel(id="user_3", email="test3@example.com"),
+            UserModel(id="user_4", email="test4@example.com")])
 
-        # session.commit()  # Коммитим в нашу "пленку" (транзакцию)
+        session.flush()
 
-    # Возвращаем словарь с этими id, чтобы тест мог их использовать
     yield {
-        "user_ids": "user_1",
+        "user_ids": ["user_1", "user_2", "user_3", "user_4"]
 
     }
 
@@ -110,65 +101,45 @@ def seed_data_managers(postgres_db_test, seed_data_users):
     """
     Эта фикстура создает предсказуемые данные ДО начала теста.
     """
-    # postgres_db_test — это фабрика сессий (sessionmaker), привязанная к транзакции
+
     with postgres_db_test() as session:
-        # 1. Создаем пользователя с ФИКСИРОВАННЫМ id
-        manager = ManagerModel(user_id="user_1", username="username_1", password="password_1", is_admin=True)
-        session.add(manager)
-        manager = ManagerModel(user_id="user_2", username="username_2", password="password_2", is_admin=False)
-        session.add(manager)
-        manager = ManagerModel(user_id="user_3", username="username_1", password="password_1", is_admin=True)
-        session.add(manager)
 
+        session.add_all(
+            [ManagerModel(user_id="user_1", username="username_1", password="password_1", is_admin=True),
+             ManagerModel(user_id="user_2", username="username_2", password="password_2", is_admin=False),
+             ManagerModel(user_id="user_3", username="username_1", password="password_1", is_admin=True),])
 
+        session.flush()
 
-    # Возвращаем словарь с этими id, чтобы тест мог их использовать
     yield {
-        "managers_ids": ["user_1", "user_2", "user_3", "user_4"],
+        "managers_ids": ["user_1", "user_2", "user_3"],
     }
 
-@pytest.fixture
-def seed_data_basket(postgres_db_test,seed_data_basket, seed_data_items):
-    """
-    Эта фикстура создает предсказуемые данные ДО начала теста.
-    """
-    # postgres_db_test — это фабрика сессий (sessionmaker), привязанная к транзакции
-    with postgres_db_test() as session:
-        # 1. Создаем пользователя с ФИКСИРОВАННЫМ id
-        basket = BasketModel(id="basket_1", items=[
-            BasketItemModel(id="basket_item_1", basket_id="basket_1", item_id="item_1", count=1),
-            BasketItemModel(id="basket_item_2", basket_id="basket_1", item_id="item_2", count=2),
-        ])
-        session.add(basket)
-        basket = BasketModel(id="basket_2", items=[
-            BasketItemModel(id="basket_item_1", basket_id="basket_1", item_id="item_1", count=1),
-        ])
-        session.add(basket)
-        basket = BasketModel(id="basket_3", items=[])
-        session.add(basket)
-
-
-
-    # Возвращаем словарь с этими id, чтобы тест мог их использовать
-    yield {
-        "managers_ids": ["user_1", "user_2", "user_3", "user_4"],
-    }
 
 @pytest.fixture
-def seed_data_basket_item(postgres_db_test,se):
+def seed_data_basket(postgres_db_test, seed_data_items):
     """
     Эта фикстура создает предсказуемые данные ДО начала теста.
     """
     with postgres_db_test() as session:
+        session.add_all([
+            BasketModel(id="basket_1"),
+            BasketModel(id="basket_2"),
+            BasketModel(id="basket_3")
+        ])
 
-        bi = BasketItemModel(id="basket_item_1", basket_id="basket_1", item_it="item_1", count=1)
+        bi = BasketItemModel(id="basket_item_1", basket_id="basket_1", item_id="item_1", count=1)
         session.add(bi)
-        bi = BasketItemModel(id="basket_item_2", basket_id="basket_1", item_it="item_2", count=2)
+        bi = BasketItemModel(id="basket_item_2", basket_id="basket_1", item_id="item_2", count=2)
+        session.add(bi)
+        bi = BasketItemModel(id="basket_item_3", basket_id="basket_2", item_id="item_2", count=2)
         session.add(bi)
 
+        session.flush()
 
-
-    # Возвращаем словарь с этими id, чтобы тест мог их использовать
     yield {
-        "ids": ["basket_item_1", "basket_item_2"],
+        "basket_id": ["basket_1", "basket_2", "basket_3"],
+        "basket_item_ids": ["basket_item_1", "basket_item_2", "basket_item_3"],
     }
+
+
