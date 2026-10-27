@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from blog.domains import Item as ItemDomain, Manager as ManegerDomain, User as UserDomain, BasketItem
 from blog.models import User as UserModel, Item as ItemModel, Manager as ManagerModel, Basket as BasketModel
-from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel
+from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel, FullUser
 
 
 # class Repository(ABC):
@@ -149,18 +149,18 @@ class PostgresUserRepository:
                 return
             raise ValueError(f"Key {key} does not exist")
 
-    def get_all(self, filters: ParamsUserModel) -> list[UserDomain] :
+    def get_all(self, filters: ParamsUserModel) -> list[FullUser] :
         stmt = select(UserModel)
         with self.SessionLocal() as session:
-            if filters.id:
+            if filters.id is not None:
                 stmt = stmt.where(UserModel.id == filters.id)
-            if filters.email:
+            if filters.email is not None:
                 stmt = stmt.where(UserModel.email == filters.email)
             users = session.execute(stmt).scalars().all()
 
             domain_users = []
             for user in users:
-                domain_users.append(UserDomain(id=user.id, email=user.email))
+                domain_users.append(FullUser(id=user.id, email=user.email))
             return domain_users
 
     def get(self, key) -> UserDomain :
@@ -257,7 +257,7 @@ class PostgresManagerRepository:
 
             manager = session.get(ManagerModel, data.user_id)
             if manager is None:
-                session.add(ManagerModel(user_id=user.id, username=data.username, password=data.password, id_admin=data.is_admin))
+                session.add(ManagerModel(user_id=user.id, username=data.username, password=data.password, is_admin=data.is_admin))
                 session.commit()
                 return
             raise ValueError(f"Manager {data.user_id} already exists")

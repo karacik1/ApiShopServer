@@ -58,6 +58,10 @@ class ItemBasketDeleteModel(StrictBaseModel):
     item_id: str
 
 # __register__
+class FullUser(StrictBaseModel):
+    id: str
+    email: str
+
 class LoginModel(StrictBaseModel):
     username: str
     password: str
@@ -67,7 +71,7 @@ class ErrorModel(StrictBaseModel):
     detail: str
 
 class NewManager(StrictBaseModel):
-    email: str
+    user_id: str
     username: str
     password: str
     admin: bool

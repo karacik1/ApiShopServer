@@ -59,7 +59,7 @@ def postgres_db_test():
 @pytest.fixture
 def seed_data_items(postgres_db_test):
     """
-    Эта фикстура создает предсказуемые данные ДО начала теста.
+    Эта фикстура создает данные вещей
     """
     with postgres_db_test() as session:
         session.add_all(
@@ -79,7 +79,7 @@ def seed_data_items(postgres_db_test):
 @pytest.fixture
 def seed_data_users(postgres_db_test):
     """
-    Эта фикстура создает предсказуемые данные ДО начала теста.
+    Эта фикстура создает предсказуемые данные юзеров
     """
     with postgres_db_test() as session:
         session.add_all([
@@ -99,7 +99,7 @@ def seed_data_users(postgres_db_test):
 @pytest.fixture
 def seed_data_managers(postgres_db_test, seed_data_users):
     """
-    Эта фикстура создает предсказуемые данные ДО начала теста.
+    Эта фикстура создает предсказуемые данные юзеров
     """
 
     with postgres_db_test() as session:
@@ -119,7 +119,7 @@ def seed_data_managers(postgres_db_test, seed_data_users):
 @pytest.fixture
 def seed_data_basket(postgres_db_test, seed_data_items):
     """
-    Эта фикстура создает предсказуемые данные ДО начала теста.
+    Эта фикстура создает предсказуемые данные для табиц Basket , BasketItemModel
     """
     with postgres_db_test() as session:
         session.add_all([
