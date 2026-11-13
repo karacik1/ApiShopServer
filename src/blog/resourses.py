@@ -163,4 +163,3 @@ def get_users(
     filters: Annotated[ParamsUserModel, Query()],) -> GetUsersModel:
     users = services.get_users(filters.model_dump(exclude_none=True))
     return GetUsersModel(users=[user for user in users])
-

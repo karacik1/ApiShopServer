@@ -54,6 +54,3 @@ class Manager(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean)
 
     user: Mapped["User"] = relationship(back_populates="manager_profile",)
-
-
-

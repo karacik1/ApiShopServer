@@ -34,11 +34,3 @@ class BasketItem:
 class Basket:
     id: str
     items: list[BasketItem] = field(default_factory=list)
-
-
-
-
-
-
-
-

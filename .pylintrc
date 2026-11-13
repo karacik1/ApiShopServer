@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+# Отключаем докстринги, длину строк и нейминг
+disable=C0114,C0115,C0116,C0301,C0103,R0903,W0613
+[MASTER]
+init-hook='import sys; sys.path.insert(0, "src")'

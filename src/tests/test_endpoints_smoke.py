@@ -1,9 +1,10 @@
-from unittest.mock import patch
+from typing import Type, Any
+from unittest.mock import patch, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
-from blog.domains import Basket, BasketItem
+from blog.domains import Basket
 from blog.main import app
 from blog.schemas import ChangeItemDescriptionModel, ChangeItemPriceModel, BasketRepresentItem, RepresentBasketModel
 
@@ -14,7 +15,7 @@ client = TestClient(app)
 # ---------------GET
 class GetEndpoint:
     url = None
-    response_type = None
+    response_type : Type[Any] = dict
     status_code = None
     data_correct = {}
     data_404 = {}
@@ -75,7 +76,7 @@ class PostEndpoint:
     response = None
     mok = None
 
-    def test_endpoint_positive_contract(self):
+    def test_endpoint_positive_contract(self,mok_service: MagicMock | None = None):
         response = client.post(url=self.url, json=self.data_correct)
 
         # Сразу проверяем и статус, и структуру ответа
@@ -108,9 +109,9 @@ class TestEndpointOrderBasket(PostEndpoint):
 
     @pytest.mark.smoke
     @patch("blog.services.order_basket")
-    def test_endpoint_positive_contract(self, mok_service):
+    def test_endpoint_positive_contract(self, mok_service=None):
         mok_service.return_value = "Done"
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok_service=mok_service)
 
 
 # ----------------DELETE
@@ -126,7 +127,7 @@ class DeleteEndpoint:
     mok = None
 
     @pytest.mark.smoke
-    def test_endpoint_positive_contract(self):
+    def test_endpoint_positive_contract(self, mok: MagicMock | None):
         response = client.delete(url=self.url, params=self.data_correct)
 
         # Сразу проверяем и статус, и структуру ответа
@@ -148,7 +149,7 @@ class TestEndPointDeleteBasket(DeleteEndpoint):
     @patch("blog.services.delete_basket")
     def test_endpoint_positive_contract(self, mok):
         mok.return_value = None
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok=mok)
 
 
 class TestEndPointDeleteBasketItem(DeleteEndpoint):
@@ -162,7 +163,7 @@ class TestEndPointDeleteBasketItem(DeleteEndpoint):
     @patch("blog.services.delete_item")
     def test_endpoint_positive_contract(self, mok):
         mok.return_value = None
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok=mok)
 
 
 # ---------------PATCH
@@ -177,7 +178,7 @@ class PatchEndpoint:
     response = None
     mok = None
 
-    def test_endpoint_positive_contract(self):
+    def test_endpoint_positive_contract(self,mok_service:MagicMock | None):
         response = client.patch(url=self.url, json=self.data_correct)
         # Сразу проверяем и статус, и структуру ответа
         assert response.status_code == self.status_code
@@ -201,7 +202,7 @@ class TestEndPointAddItem(PatchEndpoint):
     @patch("blog.services.add_item_in_basket")
     def test_endpoint_positive_contract(self, mok_service):
         mok_service.return_value = RepresentBasketModel(basket_id="5", items=[BasketRepresentItem(item_id="3", count=1)])
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok_service=mok_service)
 
 
 class TestEndpointChangeDescription(PatchEndpoint):
@@ -216,7 +217,7 @@ class TestEndpointChangeDescription(PatchEndpoint):
     @patch("blog.services.change_item_description")
     def test_endpoint_positive_contract(self, mok_service):
         mok_service.return_value = None
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok_service=mok_service)
 
 
 class TestEndpointChangePrice(PatchEndpoint):
@@ -231,4 +232,5 @@ class TestEndpointChangePrice(PatchEndpoint):
     @patch("blog.services.change_item_price")
     def test_endpoint_positive_contract(self, mok_service):
         mok_service.return_value = None
-        super().test_endpoint_positive_contract()
+        super().test_endpoint_positive_contract(mok_service=mok_service
+                                                )

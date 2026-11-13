@@ -6,13 +6,14 @@ from fastapi import HTTPException
 from blog.domains import Item, User as UserDomain, Basket, Manager as ManagerDomain
 from blog.models import User as UserModel
 from blog.repositories import PostgresUserRepository
-from blog.schemas import OrderModel, ItemBasketDeleteModel, NewManager, CreateItemModel, RepresentBasketModel, FullUser, \
-    ParamsUserModel
+from blog.schemas import (OrderModel, ItemBasketDeleteModel,
+                          NewManager, CreateItemModel, RepresentBasketModel, FullUser,
+                          ParamsUserModel)
 
 baskets_repository = None
 items_repository = None
 
-
+# pre-commit run --files src/blog/services.py
 
 
 # --ITEMS--

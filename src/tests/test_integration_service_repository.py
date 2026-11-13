@@ -82,4 +82,3 @@ class TestManagerService:
             new_manager_count = session.execute(stmt).scalars().all()
 
         assert len(new_manager_count) == 1+len(old_manager_count)
-

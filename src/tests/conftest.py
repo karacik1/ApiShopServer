@@ -141,5 +141,3 @@ def seed_data_basket(postgres_db_test, seed_data_items):
         "basket_id": ["basket_1", "basket_2", "basket_3"],
         "basket_item_ids": ["basket_item_1", "basket_item_2", "basket_item_3"],
     }
-
-

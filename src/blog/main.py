@@ -11,4 +11,3 @@ def get_app():
 
 
 app = get_app()
-

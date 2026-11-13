@@ -339,6 +339,3 @@ class PostgresBasketRepository:
             else:
                 session.add(BasketItem(id=str(uuid4()), basket_id=data.basket_id, item_id=data.item_id, count=data.count))
             session.commit()
-
-
-

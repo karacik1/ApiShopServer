@@ -32,8 +32,3 @@ class TestUserService:
             service.register(data)
 
     #GET_USERS
-
-
-
-
-

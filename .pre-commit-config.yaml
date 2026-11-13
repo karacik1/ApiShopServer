@@ -1,0 +1,16 @@
+repos:
+  # Базовые проверки чистоты файлов
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace # Удаляет лишние пробелы в конце строк
+      - id: end-of-file-fixer   # Добавляет пустую строку в конец файла
+
+  # Запуск вашего локального pylint
+#  - repo: local
+#    hooks:
+#      - id: pylint
+#        name: pylint
+#        entry: pylint
+#        language: system
+#        types: [python]
