@@ -1,10 +1,11 @@
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import select
 
 from blog.domains import Item as ItemDomain, Manager as ManegerDomain, User as UserDomain, BasketItem
 from blog.models import User as UserModel, Item as ItemModel, Manager as ManagerModel, Basket as BasketModel
-from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel, FullUser
+from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel, FullUser, ChangeItemModel
 
 
 # class Repository(ABC):
@@ -178,11 +179,8 @@ class PostgresItemRepository:
 
     def create(self, data: ItemDomain) -> None:
         with self.SessionLocal() as session:
-            item = session.get(ItemModel, data.id)
-            if item is not None:
-                raise ValueError(f"Item {data.id} already exists")
 
-            session.add(ItemModel(id=data.id, title=data.title,description=data.description, price=data.price))
+            session.add(ItemModel(id=str(uuid4()), title=data.title,description=data.description, price=data.price))
             session.commit()
 
     def delete(self, key: str) -> None:
@@ -194,18 +192,19 @@ class PostgresItemRepository:
             session.delete(item)
             session.commit()
 
-    def update(self,data: ItemDomain) -> None:
+    def update(self,data: ChangeItemModel) -> None:
         with self.SessionLocal() as session:
             item = session.get(ItemModel, data.id)
             if item is None:
                 raise ValueError(f"Item {data.id} does not exist")
-            item.title = data.title
-            item.description = data.description
-            item.price = data.price
+            item.title = data.title or item.title
+            item.description = data.description or item.description
+            item.price = data.price or item.price
 
             session.commit()
 
-    def get_all(self, filters: ParamsItemModel) -> list[ItemDomain]:
+
+    def get_all(self, filters: ParamsItemModel) -> list[ItemModel]:
         with self.SessionLocal() as session:
             stmt = select(ItemModel)
             if filters.id is not None:
@@ -221,14 +220,16 @@ class PostgresItemRepository:
                 stmt= stmt.where(ItemModel.price == filters.price)
 
             items = session.execute(stmt).scalars().all()
-            return [ItemDomain(item.id, item.title, item.description, item.price) for item in items]
+            return items
 
-    def get(self, key: str) -> ItemDomain:
+    def get(self, key: str) -> ItemModel:
         with self.SessionLocal() as session:
             item=session.get(ItemModel, key)
             if item is not None:
-                return ItemDomain(item.id, item.title, item.description, item.price)
+                return ItemModel(item.id, item.title, item.description, item.price)
             raise KeyError(f"Item {key} does not exist")
+
+
 
 class PostgresManagerRepository:
     def __init__(self,session_factory):

@@ -14,6 +14,14 @@ class Item(Base):
     description: Mapped[str] = mapped_column(String)
     price: Mapped[int] = mapped_column(Integer)
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Item):
+            return NotImplemented
+        return (self.id == other.id and
+                self.title == other.title and
+                self.description == other.description and
+                self.price == other.price)
+
 
 
 

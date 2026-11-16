@@ -108,7 +108,6 @@ def create_basket() -> None:
 def add_item(new_item: AddItemModel) -> RepresentBasketModel:
     item = services.add_item_in_basket(basket_id=new_item.basket_id,
                                        item_id=new_item.item_id,
-
                                        count=new_item.count)
     return item
 

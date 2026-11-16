@@ -3,41 +3,37 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from blog.domains import Item, User as UserDomain, Basket, Manager as ManagerDomain
-from blog.models import User as UserModel
-from blog.repositories import PostgresUserRepository
+from blog.domains import Item as ItemDomain, User as UserDomain, Basket, Manager as ManagerDomain
+from blog.models import Item as ItemModel
 from blog.schemas import (OrderModel, ItemBasketDeleteModel,
-                          NewManager, CreateItemModel, RepresentBasketModel, FullUser,
-                          ParamsUserModel)
+                          RepresentBasketModel, FullUser,
+                          ParamsUserModel, ChangeItemModel)
 
 baskets_repository = None
-items_repository = None
-
 # pre-commit run --files src/blog/services.py
 
 
 # --ITEMS--
-def get_items(filters) -> list[Item]:
-    return items_repository.get_all(filters)
+class ItemService:
+    def __init__(self, items_repository):
+        self.items_repository = items_repository
 
+    @pytest.mark.done
+    def get_items(self, filters) -> list[ItemModel]:
+        return self.items_repository.get_all(filters)
 
-def create_item(data:CreateItemModel):
-    key = str(uuid4())
-    item = Item(id=key, title=data.title, description=data.description, price=data.price)
-    items_repository.save(key= key, obj=item)
+    @pytest.mark.done
+    def create_item(self, data:ItemDomain):
+        self.items_repository.create(data=data)
 
+    @pytest.mark.done
+    def delete(self, key: str) -> None:
+        self.items_repository.delete(key=key)
 
+    @pytest.mark.done
+    def change_item_param(self, data: ChangeItemModel) -> None:
+        self.items_repository.update(data)
 
-def change_item_description(item_id: str, new_description: str) -> None:
-    current_item = items_repository.get(key=item_id)
-    current_item.change_description(new_description)
-    items_repository.save(item_id, obj=current_item, overwrite=True)
-
-
-def change_item_price(item_id: str, new_price: int) -> None:
-    current_item = items_repository.get(item_id)
-    current_item.change_price(new_price)
-    items_repository.save(item_id, obj=current_item, overwrite=True)
 
 # --BASKET--
 

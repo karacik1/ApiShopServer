@@ -12,7 +12,11 @@ class StrictBaseModel(BaseModel):
     )
 # --ITEMS--
 
-
+class ChangeItemModel(StrictBaseModel):
+    id: str
+    title: str | None = None
+    description: str | None = None
+    price: int | None = None
 
 class GetItemModel(StrictBaseModel):
     item_id: str
