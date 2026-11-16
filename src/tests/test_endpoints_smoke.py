@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from blog.domains import Basket
 from blog.main import app
-from blog.schemas import ChangeItemDescriptionModel, ChangeItemPriceModel, BasketRepresentItem, RepresentBasketModel
+from blog.schemas import BasketRepresentItem, RepresentBasketModel
 
 client = TestClient(app)
 

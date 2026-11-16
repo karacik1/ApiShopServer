@@ -46,12 +46,21 @@ class BasketItem(Base):
     basket: Mapped["Basket"] = relationship(back_populates="items")
     item: Mapped["Item"] = relationship(passive_deletes=True)
 
+
+
+
 class Basket(Base):
     __tablename__ = "baskets"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     items: Mapped[list["BasketItem"] ] = relationship(back_populates="basket",
     cascade="all, delete-orphan",)
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Basket):
+            return NotImplemented
+        return self.id == other.id and self.items == other.items
+
 
 class Manager(Base):
     __tablename__ = "managers"

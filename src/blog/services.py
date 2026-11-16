@@ -3,13 +3,11 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from blog.domains import Item as ItemDomain, User as UserDomain, Basket, Manager as ManagerDomain
-from blog.models import Item as ItemModel
+from blog.domains import  User as UserDomain, Basket as BasketDomain, Manager as ManagerDomain
+from blog.models import Item as ItemModel, Basket as BasketModel, User as UserModel
 from blog.schemas import (OrderModel, ItemBasketDeleteModel,
                           RepresentBasketModel, FullUser,
-                          ParamsUserModel, ChangeItemModel)
-
-baskets_repository = None
+                          ParamsUserModel, ChangeItemModel, AddItemModel, Item as ItemDomain, ItemWithoutID, )
 # pre-commit run --files src/blog/services.py
 
 
@@ -23,7 +21,7 @@ class ItemService:
         return self.items_repository.get_all(filters)
 
     @pytest.mark.done
-    def create_item(self, data:ItemDomain):
+    def create_item(self, data:ItemWithoutID):
         self.items_repository.create(data=data)
 
     @pytest.mark.done
@@ -36,51 +34,54 @@ class ItemService:
 
 
 # --BASKET--
+class BasketService:
+    def __init__(self, baskets_repository):
+        self.baskets_repository = baskets_repository
 
-def get_baskets(filters: dict) -> list[Basket]:
+    @pytest.mark.done
+    def get_baskets(self, filters: dict) -> BasketModel:
 
-    baskets = baskets_repository.get_all(filters=filters)
-    return baskets
+        baskets = self.baskets_repository.get_all(filters=filters)
+        return baskets
 
+    @pytest.mark.done
+    def add_item_in_basket(self, item_id: str, basket_id: str, count: int = 1) -> RepresentBasketModel:
+        # TODO: хочу что бы сервер сам искал корзину после доавления, а не репозиторий
+        basket = self.baskets_repository.get(key=basket_id)
+        if not basket:
+            raise HTTPException(status_code=404, detail="Basket not found")
 
+        new_basket = self.baskets_repository.add_item(AddItemModel(basket_id=basket_id, item_id=item_id, count=count))
+        return new_basket
 
-def add_item_in_basket(item_id: str, basket_id: str, count: int = 1) -> RepresentBasketModel:
-    basket = baskets_repository.get(key=basket_id)
-    if not basket:
-        raise HTTPException(status_code=404, detail="Basket not found")
+    @pytest.mark.done
+    def delete_item(self, data: ItemBasketDeleteModel) -> None:
+        basket = self.baskets_repository.get(key=data.basket_id)
+        if not basket:
+            raise HTTPException(status_code=404, detail="Basket not found")
 
-    basket.add_item(item_id=item_id, count = count)
-    baskets_repository.save(key=basket_id, obj=basket)
-    return basket
+        self.baskets_repository.delete_item(item_id=data.item_id, basket_id=data.basket_id)
+        return self.baskets_repository.get(key=data.basket_id)
 
-def delete_item(data: ItemBasketDeleteModel) -> None:
-    basket = baskets_repository.get(key=data.basket_id)
-    if not basket:
-        raise HTTPException(status_code=404, detail="Basket not found")
+    @pytest.mark.done
+    def delete_basket(self, basket_id: str) -> None:
+        self.baskets_repository.delete(basket_id)
 
-    basket.delete_item(item_id=data.item_id)
-    baskets_repository.save(key=data.basket_id, obj=basket)
-    return basket
+    def get_basket(self, basket_id: str) -> BasketDomain | None:
+        basket = self.baskets_repository.get(basket_id)
+        return basket
 
+    # TODO: нужно создать отдельную тиблицу с заказами и пользователями плюс вынести возможно в отдельный метод
+    # def order_basket(self, order: OrderModel) -> None:
+    #     if not self.users_repository.get(order.email):
+    #         raise HTTPException(status_code=401, detail="User not found")
+    #
+    #     if not self.baskets_repository.get(order.basket_id):
+    #         raise HTTPException(status_code=404, detail="Basket not found")
 
-def delete_basket(basket_id: str) -> None:
-    baskets_repository.delete(basket_id)
-
-def get_basket(basket_id: str) -> Basket | None:
-    basket = baskets_repository.get(basket_id)
-    return basket
-
-def order_basket(order: OrderModel) -> None:
-    if not users_repository.get(order.email):
-        raise HTTPException(status_code=401, detail="User not found")
-
-    if not baskets_repository.get(order.basket_id):
-        raise HTTPException(status_code=404, detail="Basket not found")
-
-def create_basket() -> None:
-    new_basket_id = str(uuid4())
-    new_basket = Basket(id=new_basket_id)
-    baskets_repository.save(key=new_basket_id, obj=new_basket)
+    @pytest.mark.don
+    def create_basket(self) -> None:
+        self.baskets_repository.create()
 
 
 

@@ -3,9 +3,9 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from blog.domains import Item as ItemDomain, Manager as ManegerDomain, User as UserDomain, BasketItem
-from blog.models import User as UserModel, Item as ItemModel, Manager as ManagerModel, Basket as BasketModel
-from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel, FullUser, ChangeItemModel
+from blog.domains import Manager as ManegerDomain, User as UserDomain, BasketItem as BasketItemDomain, Basket as BasketDomain
+from blog.models import User as UserModel, Item as ItemModel, Manager as ManagerModel, Basket as BasketModel, BasketItem as BasketItemModel
+from blog.schemas import ParamsUserModel, ParamsItemModel, AddItemModel, ParamsManagerModel, FullUser, ChangeItemModel, Item as ItemDomain
 
 
 # class Repository(ABC):
@@ -320,7 +320,7 @@ class PostgresBasketRepository:
             if basket is None:
                 raise ValueError(f"Basket {basket_id} does not exist")
 
-            stmt = select(BasketItem).where(BasketItem.basket_id == basket_id, BasketItem.item_id == item_id)
+            stmt = select(BasketItemModel).where(BasketItemModel.basket_id == basket_id, BasketItemModel.item_id == item_id)
             item = session.execute(stmt).scalar_one_or_none()
             if item is None:
                 raise ValueError(f"Item {item_id} does not exist")
@@ -333,10 +333,18 @@ class PostgresBasketRepository:
             if basket is None:
                 raise ValueError(f"Basket {data.basket_id} does not exist")
 
-            stmt = select(BasketItem).where(BasketItem.basket_id == data.basket_id, BasketItem.item_id == data.item_id)
+            stmt = select(BasketItemModel).where(BasketItemModel.basket_id == data.basket_id, BasketItemModel.item_id == data.item_id)
             item = session.execute(stmt).scalar_one_or_none()
             if item is not None:
                 item.count += data.count
             else:
-                session.add(BasketItem(id=str(uuid4()), basket_id=data.basket_id, item_id=data.item_id, count=data.count))
+                session.add(BasketItemModel(id=str(uuid4()), basket_id=data.basket_id, item_id=data.item_id, count=data.count))
             session.commit()
+            return session.get(BasketModel, data.basket_id)
+
+    def get(self, key: str) -> BasketDomain:
+        with self.SessionLocal() as session:
+            basket=session.get(BasketModel, key)
+            if basket is not None:
+                return BasketDomain(id=basket.id, items=[item for item in basket.items])
+            raise KeyError(f"Basket {key} does not exist")

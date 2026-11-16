@@ -2,10 +2,12 @@ import pytest
 from sqlalchemy import select
 
 from blog import services
-from blog.domains import User as UserDomain, Manager as ManagerDomain, Item as ItemDomain
-from blog.models import User as UserModel, Manager as ManagerModel, Item as ItemModel
-from blog.repositories import PostgresUserRepository, PostgresManagerRepository, PostgresItemRepository
-from blog.schemas import ParamsUserModel, ParamsItemModel, ChangeItemModel
+from blog.domains import User as UserDomain, Manager as ManagerDomain, Basket as BasketDomain, BasketItem as BasketItemDomain
+from blog.models import User as UserModel, Manager as ManagerModel, Item as ItemModel, Basket as BasketModel, \
+    BasketItem as BasketItemModel
+from blog.repositories import PostgresUserRepository, PostgresManagerRepository, PostgresItemRepository, \
+    PostgresBasketRepository
+from blog.schemas import ParamsUserModel, ParamsItemModel, ChangeItemModel, ItemBasketDeleteModel, Item as ItemDomain
 from tests.conftest import postgres_db_test
 
 
@@ -85,7 +87,7 @@ class TestManagerService:
         assert len(new_manager_count) == 1 + len(old_manager_count)
 
 
-class TestItemsService:
+class TestItemService:
     def test_create_item(self, postgres_db_test, seed_data_items):
         repro = PostgresItemRepository(postgres_db_test)
         service = services.ItemService(repro)
@@ -148,7 +150,7 @@ class TestItemsService:
 
         data = ChangeItemModel(
             id="item_1",
-            title= "NEW_TEST_TITLE",
+            title="NEW_TEST_TITLE",
             description="NEW_TEST_DESCRIPTION",
             price=1000000,
         )
@@ -160,3 +162,99 @@ class TestItemsService:
         assert changed_item[0].description == data.description
         assert changed_item[0].title == data.title
         assert changed_item[0].price == data.price
+
+
+class TestBasketService:
+    def test_create_basket(self, postgres_db_test, seed_data_basket):
+        repro = PostgresBasketRepository(postgres_db_test)
+        service = services.BasketService(repro)
+
+        with postgres_db_test() as session:
+            stmt = select(BasketModel)
+            old_basket_count = session.execute(stmt).scalars().all()
+
+        service.create_basket()
+
+        with postgres_db_test() as session:
+            stmt = select(BasketModel)
+            new_basket_count = session.execute(stmt).scalars().all()
+
+        assert len(new_basket_count) == 1 + len(old_basket_count)
+
+    def test_delete_basket(self, postgres_db_test, seed_data_basket):
+        repro = PostgresBasketRepository(postgres_db_test)
+        service = services.BasketService(repro)
+
+        with postgres_db_test() as session:
+            stmt = select(BasketModel)
+            old_basket_count = session.execute(stmt).scalars().all()
+
+        basket_for_delete = "basket_1"
+        service.delete_basket(basket_id=basket_for_delete)
+
+        with postgres_db_test() as session:
+            stmt = select(BasketModel)
+            new_basket_count = session.execute(stmt).scalars().all()
+
+        assert len(new_basket_count) == len(old_basket_count) - 1
+
+    def test_add_item_in_basket(self, postgres_db_test, seed_data_basket):
+        repro = PostgresBasketRepository(postgres_db_test)
+        service = services.BasketService(repro)
+        item_id = "item_3"
+        basket_id = "basket_1"
+        count = 1
+
+        with postgres_db_test() as session:
+            stmt = select(BasketItemModel).where(
+                BasketItemModel.item_id == item_id,
+                BasketItemModel.basket_id == basket_id,
+                BasketItemModel.count == count)
+            old_basket_count = session.execute(stmt).scalar_one_or_none()
+
+        service.add_item_in_basket(item_id=item_id, basket_id=basket_id, count=count)
+
+        with postgres_db_test() as session:
+            stmt = select(BasketItemModel).where(
+                BasketItemModel.item_id == item_id,
+                BasketItemModel.basket_id == basket_id,
+                BasketItemModel.count == count)
+            new_basket_count = session.execute(stmt).scalar_one_or_none()
+
+        assert old_basket_count is None
+        assert new_basket_count is not None
+
+    def test_delete_item_in_basket(self, postgres_db_test, seed_data_basket):
+        repro = PostgresBasketRepository(postgres_db_test)
+        service = services.BasketService(repro)
+        item_id = "item_1"
+        basket_id = "basket_1"
+
+        with postgres_db_test() as session:
+            stmt = select(BasketItemModel).where(
+                BasketItemModel.item_id == item_id,
+                BasketItemModel.basket_id == basket_id)
+            old_basket_count = session.execute(stmt).scalar_one_or_none()
+
+        service.delete_item(ItemBasketDeleteModel(item_id=item_id, basket_id=basket_id))
+
+        with postgres_db_test() as session:
+            stmt = select(BasketItemModel).where(
+                BasketItemModel.item_id == item_id,
+                BasketItemModel.basket_id == basket_id)
+            new_basket_count = session.execute(stmt).scalar_one_or_none()
+
+        assert old_basket_count is not None
+        assert new_basket_count is None
+
+    def test_get_basket(self, postgres_db_test, seed_data_basket):
+        repro = PostgresBasketRepository(postgres_db_test)
+        service = services.BasketService(repro)
+
+        basket = service.get_basket(basket_id="basket_1")
+        print(basket)
+        print("done")
+        correct_result = BasketDomain(id="basket_1", items=[
+            BasketItemDomain(id="basket_item_1", basket_id="basket_1", item_id="item_1", count=1),
+            BasketItemDomain(id="basket_item_2", basket_id="basket_1", item_id="item_2", count=2)])
+        assert basket == correct_result
